@@ -8,6 +8,7 @@ use crate::openapi::{self, OperationSpec};
 use crate::yarr::{OpenApiRequest, helpers::build_operation_url};
 
 mod body;
+mod jobs;
 mod parameters;
 mod validation;
 
@@ -29,6 +30,18 @@ impl YarrService {
     }
 
     async fn execute_operation_spec(
+        &self,
+        config: &crate::config::ServiceConfig,
+        spec: &OperationSpec,
+        args: &Value,
+    ) -> Result<Value> {
+        match jobs::wait_options(config.kind, spec, args)? {
+            Some(options) => jobs::submit_and_wait(self, config, spec, args, options).await,
+            None => self.execute_operation_once(config, spec, args).await,
+        }
+    }
+
+    async fn execute_operation_once(
         &self,
         config: &crate::config::ServiceConfig,
         spec: &OperationSpec,

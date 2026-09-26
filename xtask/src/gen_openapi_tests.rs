@@ -265,6 +265,48 @@ fn extract_operations_disambiguates_duplicate_names() {
 }
 
 #[test]
+fn vendored_plex_add_section_matches_verified_server_contract() {
+    let spec_path =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../specs/plex.openapi.yml");
+    let spec = load_spec(spec_path.to_str().unwrap()).unwrap();
+    let operations = extract_operations(&spec).unwrap();
+    let operation = operations
+        .iter()
+        .find(|operation| operation.name == "add_section")
+        .unwrap();
+
+    assert_eq!(operation.method, "POST");
+    assert_eq!(operation.path, "/library/sections");
+    assert!(operation.responses.iter().any(|response| {
+        response.status.as_deref() == Some("201") && response.media_type == "application/json"
+    }));
+
+    let media_type = operation
+        .parameters
+        .iter()
+        .find(|parameter| parameter.name == "type")
+        .unwrap();
+    assert!(media_type.required);
+    assert!(media_type.schema.contains("\"type\":\"string\""));
+    assert!(media_type.schema.contains("\"movie\""));
+    assert!(media_type.schema.contains("\"show\""));
+
+    let location = operation
+        .parameters
+        .iter()
+        .find(|parameter| parameter.name == "location")
+        .unwrap();
+    assert!(location.required);
+    assert_eq!(location.schema, "{\"type\":\"string\"}");
+    assert!(
+        !operation
+            .parameters
+            .iter()
+            .any(|parameter| parameter.name == "locations")
+    );
+}
+
+#[test]
 fn extract_types_renders_interface_and_enum() {
     let spec = json!({
         "components": { "schemas": {

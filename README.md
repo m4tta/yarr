@@ -292,24 +292,29 @@ Inside Code Mode, scripts can use:
 - `codemode.run(name, input)`, `codemode.snippets()`, and `writeArtifact(...)`
   for reusable scripts and artifacts.
 
-Generated callables come from metadata tables. They preserve method/path,
-required path arguments, known query names, JSON-body presence, and a bounded
-single-file multipart escape hatch. They do not enforce every required query,
-header/cookie parameter, style/explode rule, form schema, media type, or
-response schema. See `docs/API.md` before relying on a generated operation for
-a non-JSON or serialization-sensitive endpoint.
+Generated callables come from metadata tables. They validate parameters and JSON
+request bodies against the bundled schemas and preserve supported OpenAPI
+serialization and media types. See [the support boundary](docs/API.md#generated-operation-support-boundary)
+for supported transports and omitted operations. Response schemas are not fully
+validated against upstream payloads.
 
 Example:
 
 ```js
 async () => {
   const queue = await radarr.get_queue();
-  await radarr.post_command({
-    body: { name: "MoviesSearch", movieIds: [456] }
+  const outcome = await radarr.post_command({
+    body: { name: "MoviesSearch", movieIds: [456] },
+    waitForCompletion: { timeoutSeconds: 20 }
   });
-  return { queued: queue.records?.length };
+  return { queued: queue.records?.length, outcome };
 }
 ```
+
+Sonarr/Radarr `post_command` can wait up to 20 seconds for a terminal outcome.
+Inspect `outcome.status`; a timeout preserves `commandId` for later polling and
+does not cancel the job. Omit `waitForCompletion` for the original immediate
+submission response. See [command outcome details](docs/API.md#waiting-for-sonarr-and-radarr-commands).
 
 ### Generic Actions
 

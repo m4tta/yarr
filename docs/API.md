@@ -1,7 +1,7 @@
 ---
 title: "yarr API"
 created: 2026-05-22
-updated: 2026-07-30
+updated: 2026-09-26
 ---
 
 # yarr API
@@ -66,6 +66,39 @@ missing elicitation fails closed. A script cannot bypass that decision by
 calling `callTool` or an operation callable.
 
 Generated operations are dispatched via the `op` action (`{action:"op", service, op, args}`); inside Code Mode they are the per-service callables above. The action set is **registry-derived** — run the `help` action (or `yarr help`) for the current full list and per-action params.
+
+### Waiting for Sonarr and Radarr commands
+
+`post_command` normally returns the upstream submission response immediately.
+Opt into bounded completion tracking with `waitForCompletion` alongside `body`:
+
+```js
+async () => sonarr.post_command({
+  body: { name: "RescanSeries", seriesId: 123 },
+  waitForCompletion: { timeoutSeconds: 20, pollIntervalMs: 500 }
+})
+```
+
+The equivalent CLI arguments are:
+
+```sh
+yarr sonarr op post_command --args '{"body":{"name":"RescanSeries","seriesId":123},"waitForCompletion":{}}'
+```
+
+Both fields are optional integers: `timeoutSeconds` defaults to 20 and accepts
+1-20; `pollIntervalMs` defaults to 500 and accepts 100-5000. These controls apply
+only to Sonarr/Radarr `post_command`; invalid controls fail before submission.
+Yarr submits once, then polls within one deadline including HTTP request time.
+
+The result contains `commandId`, `status`, `finished`, and the latest upstream
+`command`. Status is `completed`, `failed`, `aborted`, `cancelled`, `timed_out`,
+or `unknown`; upstream `orphaned` maps to `failed`. `finished` means an upstream
+terminal state was observed, so callers must inspect `status` to decide success.
+Timeouts and failed/malformed polls preserve the command ID and resumability
+guidance. Use `get_command_by_id` to check again; a timeout does not cancel the
+upstream job. If submission fails before an ID is returned, its outcome may be
+unknown: do not blindly resubmit. These semantics are shared by CLI, flat MCP,
+and Code Mode. Other operations retain their normal response shape.
 
 ### Generated-operation support boundary
 

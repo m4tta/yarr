@@ -102,7 +102,7 @@ pub const ACTION_SPECS: &[ActionSpec] = &[
     // high-impact action — see `actions::operation_effect`.
     ActionSpec {
         name: "op",
-        description: "Dispatch a generated OpenAPI operation.",
+        description: "Dispatch a generated OpenAPI operation. Sonarr/Radarr post_command args may include waitForCompletion with bounded timeoutSeconds and pollIntervalMs controls.",
         required_scope: Some(WRITE_SCOPE),
         transport: ActionTransport::McpOnly,
         required_params: &["service", "op"],

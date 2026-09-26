@@ -204,7 +204,7 @@ pub fn build_catalog(services: &[(String, ServiceKind)]) -> Vec<CatalogEntry> {
             // The per-service `service_status` callable is still synthesized.
             out.push(service_entry(name, "service_status"));
             for op in crate::openapi::operations_for_kind(*kind) {
-                out.push(operation_entry(name, op));
+                out.push(operation_entry(name, *kind, op));
             }
         } else {
             for action in service_action_names(*kind) {
@@ -221,12 +221,20 @@ pub fn build_catalog(services: &[(String, ServiceKind)]) -> Vec<CatalogEntry> {
 /// `write`, and DELETE ops `destructive` — metadata only, they dispatch
 /// immediately like any other write (see `docs/API.md`). The OpenAPI `tag` is
 /// surfaced as the capability for grouping.
-fn operation_entry(service: &str, op: &crate::openapi::OperationSpec) -> CatalogEntry {
+fn operation_entry(
+    service: &str,
+    kind: ServiceKind,
+    op: &crate::openapi::OperationSpec,
+) -> CatalogEntry {
     let mut required: Vec<&'static str> = op.path_params.to_vec();
     if op.has_body {
         required.push("body");
     }
-    let description = if op.summary.is_empty() {
+    let description = if matches!(kind, ServiceKind::Sonarr | ServiceKind::Radarr)
+        && op.name == "post_command"
+    {
+        "Submit a command. Optional waitForCompletion: {timeoutSeconds: 1..20 (default 20), pollIntervalMs: 100..5000 (default 500)} returns a bounded command outcome with a resumable commandId."
+    } else if op.summary.is_empty() {
         // Leak-free: fall back to the method+path which are already 'static.
         op.path
     } else {

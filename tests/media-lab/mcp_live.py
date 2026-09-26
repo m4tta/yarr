@@ -7,7 +7,7 @@ def _send(process, message):
     process.stdin.write(json.dumps(message, separators=(",", ":")) + "\n")
     process.stdin.flush()
 
-def _receive(process, request_id, timeout=20):
+def _receive(process, request_id, timeout=30):
     selector = selectors.DefaultSelector()
     selector.register(process.stdout, selectors.EVENT_READ)
     deadline = time.monotonic() + timeout
@@ -52,9 +52,26 @@ def _text(result):
     except json.JSONDecodeError:
         return value
 
-def check_mcp(lab, service):
-    """Verify flat-tool success, validation, and fail-closed elicitation."""
-    env = dict(lab.env, YARR_MCP_TOOL_MODE="flat")
+def _stop(process):
+    if process.stdin and not process.stdin.closed:
+        try:
+            process.stdin.close()
+        except BrokenPipeError:
+            pass
+    try:
+        process.wait(timeout=3)
+    except subprocess.TimeoutExpired:
+        process.terminate()
+        try:
+            process.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=3)
+    if process.stdout:
+        process.stdout.close()
+
+def _start(lab, tool_mode):
+    env = dict(lab.env, YARR_MCP_TOOL_MODE=tool_mode)
     process = subprocess.Popen([lab.binary, "mcp"], env=env,
         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL, text=True, bufsize=1)
@@ -66,6 +83,15 @@ def check_mcp(lab, service):
         if initialized.get("serverInfo", {}).get("name") != "yarr":
             raise AssertionError("Unexpected MCP server identity")
         _send(process, {"jsonrpc": "2.0", "method": "notifications/initialized"})
+        return process
+    except Exception:
+        _stop(process)
+        raise
+
+def check_mcp(lab, service):
+    """Verify flat-tool success, validation, and fail-closed elicitation."""
+    process = _start(lab, "flat")
+    try:
         read = _result(_tool(process, 2, service, {
             "action": "op", "op": "get_qualityprofile", "args": {},
         }))
@@ -85,18 +111,43 @@ def check_mcp(lab, service):
         declined_body = _text(declined)
         if not isinstance(declined_body, dict) or declined_body.get("declined") is not True:
             raise AssertionError("MCP high-impact call did not fail closed")
+        waited = _result(_tool(process, 5, service, {
+            "action": "op", "op": "post_command",
+            "args": {"body": {"name": "CheckHealth"}, "waitForCompletion": {}},
+        }))
+        outcome = _text(waited)
+        if waited.get("isError") or outcome.get("status") != "completed" or outcome.get("finished") is not True:
+            raise AssertionError("MCP command wait did not report completed health check")
+        if lab.http(service, f"/api/v3/command/{outcome['commandId']}")["status"] != "completed":
+            raise AssertionError("MCP command completion differs from independent HTTP read")
         return {"transport": "stdio", "tool_mode": "flat", "tool": service,
                 "verified": ["generated read", "invalid parameter rejection",
-                             "high-impact call declined without elicitation"]}
+                             "high-impact call declined without elicitation",
+                             "bounded command wait with independent completion verification"]}
     finally:
-        if process.stdin:
-            process.stdin.close()
-        try:
-            process.wait(timeout=3)
-        except subprocess.TimeoutExpired:
-            process.terminate()
-            try:
-                process.wait(timeout=3)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=3)
+        _stop(process)
+
+def check_codemode_wait(lab, service):
+    """Verify the default single-tool Code Mode path for bounded command waits."""
+    if service not in {"sonarr", "radarr"}:
+        raise ValueError("Code Mode command waits support only sonarr and radarr")
+    process = _start(lab, "codemode")
+    try:
+        arguments = {"body": {"name": "CheckHealth"}, "waitForCompletion": {}}
+        code = f"async () => {service}.post_command({json.dumps(arguments, separators=(',', ':'))})"
+        called = _result(_tool(process, 2, "yarr", {"code": code}))
+        envelope = _text(called)
+        outcome = envelope.get("result") if isinstance(envelope, dict) else None
+        if (called.get("isError") or not isinstance(outcome, dict) or
+                outcome.get("status") != "completed" or outcome.get("finished") is not True):
+            raise AssertionError("Code Mode command wait did not report completed health check")
+        command_id = outcome.get("commandId")
+        if not isinstance(command_id, int) or command_id <= 0:
+            raise AssertionError("Code Mode command wait returned no command id")
+        if lab.http(service, f"/api/v3/command/{command_id}")["status"] != "completed":
+            raise AssertionError("Code Mode command completion differs from independent HTTP read")
+        return {"transport": "stdio", "tool_mode": "codemode", "tool": "yarr",
+                "verified": ["service generated callable through Code Mode",
+                             "bounded command wait with independent completion verification"]}
+    finally:
+        _stop(process)

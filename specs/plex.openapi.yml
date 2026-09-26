@@ -1618,6 +1618,7 @@ paths:
                             type: string
                         type: object
                 type: object
+  /library/sections:
     post:
       summary: Add a library section
       operationId: addSection
@@ -1650,7 +1651,12 @@ paths:
           in: query
           required: true
           schema:
-            type: integer
+            type: string
+            enum:
+              - movie
+              - show
+              - artist
+              - photo
         - name: scanner
           description: The scanner this section should use
           in: query
@@ -1673,16 +1679,13 @@ paths:
           required: true
           schema:
             type: string
-        - name: locations
-          description: The locations on disk to add to this section
+        - name: location
+          description: The location on disk to add to this section
           in: query
+          required: true
           schema:
-            type: array
-            items:
-              type: string
-          example:
-            - O:\fatboy\Media\Ripped\Music
-            - O:\fatboy\Media\My Music
+            type: string
+          example: O:\fatboy\Media\Ripped\Music
         - name: prefs
           description: The preferences for this section
           in: query
@@ -1703,7 +1706,7 @@ paths:
           schema:
             $ref: "#/components/schemas/BoolInt"
       responses:
-        '200':
+        '201':
           $ref: '#/components/responses/slash-get-responses-200'
         '400':
           description: Section cannot be created due to bad parameters in request

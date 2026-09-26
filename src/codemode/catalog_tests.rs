@@ -53,6 +53,19 @@ fn each_entry_carries_its_service() {
 }
 
 #[test]
+fn waitable_command_controls_are_discoverable() {
+    let cat = build_catalog(&services());
+    for path in ["sonarr.post_command", "radarr.post_command"] {
+        let command = cat.iter().find(|entry| entry.path() == path).unwrap();
+        let description = command.description();
+        assert!(description.contains("waitForCompletion"));
+        assert!(description.contains("timeoutSeconds"));
+        assert!(description.contains("pollIntervalMs"));
+        assert!(description.contains("commandId"));
+    }
+}
+
+#[test]
 fn catalog_paths_are_unique() {
     let cat = build_catalog(&services());
     let mut paths: Vec<&str> = cat.iter().map(CatalogEntry::path).collect();

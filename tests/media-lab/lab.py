@@ -70,16 +70,16 @@ class Lab:
             raise RuntimeError(self.redact(result.stderr[-3000:]))
         return json.loads(result.stdout)
 
-    def op(self, service, name, **args):
-        return self.cli(service, "op", name, "--args", json.dumps(args))
+    def op(self, service, operation, **args):
+        return self.cli(service, "op", operation, "--args", json.dumps(args))
 
-    def http(self, service, path):
+    def http(self, service, path, timeout=30):
         headers = {"Accept": "application/json"}
         if service in self.keys:
             headers["X-Api-Key"] = self.keys[service]
         request = urllib.request.Request(self.env[f"YARR_{service.upper()}_URL"] + path, headers=headers)
         # Explicitly bypass user proxy settings for independent verification too.
-        with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request, timeout=30) as response:
+        with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request, timeout=timeout) as response:
             return json.load(response)
 
     def profile_roundtrip(self, service):
@@ -125,6 +125,7 @@ def main():
     parser.add_argument("--binary", default=str(ROOT / "target/debug/yarr"))
     parser.add_argument("--report", type=Path, default=ROOT / ".cache/media-lab/report.json")
     parser.add_argument("--seed", action="store_true", help="Generate synthetic clips and verify library scans (requires ffmpeg)")
+    parser.add_argument("--media-manifest", type=Path, help="Private manifest of local media copies to import and scan")
     args = parser.parse_args()
     if args.command in {"up", "down"}:
         compose_action(args.command, COMPOSE)
@@ -136,9 +137,13 @@ def main():
         return
     report = {"started_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
               "scope": "isolated live smoke/CRUD; not exhaustive API coverage", "services": {}, "checks": []}
+    media_manifest = None
+    if args.media_manifest:
+        from real_media import load_manifest
+        media_manifest = load_manifest(args.media_manifest)
     with open(args.binary, "rb") as binary:
         report["binary_sha256"] = hashlib.file_digest(binary, "sha256").hexdigest()
-    report.update(binary_path=str(Path(args.binary).resolve()), seed=args.seed,
+    report.update(binary_path=str(Path(args.binary).resolve()), seed=args.seed, real_media=media_manifest is not None,
                   git_revision=run("git", "-C", str(ROOT), "rev-parse", "HEAD").strip(),
                   source_dirty=bool(run("git", "-C", str(ROOT), "status", "--porcelain").strip()),
                   docker_engine_id=run("docker", "info", "--format", "{{.ID}}").strip())
@@ -147,18 +152,27 @@ def main():
         for service, info in containers.items():
             report["services"][service] = {"image": info["Config"]["Image"], "image_id": info["Image"]}
         checks = []
-        from mcp_live import check_mcp
+        from mcp_live import check_codemode_wait, check_mcp
+        from admin import check_admin
         for service in ("sonarr", "radarr"):
             checks.extend([(service, "status", lambda s=service: lab.cli(s, "status")),
                            (service, "quality_profile_crud", lambda s=service: lab.profile_roundtrip(s)),
                            (service, "tag_crud", lambda s=service: lab.tag_roundtrip(s)),
+                           (service, "configuration_crud", lambda s=service: check_admin(lab, s)),
                            (service, "invalid_parameter", lambda s=service: lab.invalid_request(s)),
-                           (service, "mcp_dispatch", lambda s=service: check_mcp(lab, s))])
+                           (service, "mcp_dispatch", lambda s=service: check_mcp(lab, s)),
+                           (service, "mcp_codemode_wait", lambda s=service: check_codemode_wait(lab, s))])
             if args.seed:
                 from media import seed_and_scan
                 checks.append((service, "media_scan", lambda s=service: seed_and_scan(lab, s)))
+            if media_manifest:
+                from real_media import import_and_scan
+                checks.append((service, "real_media_import_scan", lambda s=service: import_and_scan(lab, s, media_manifest[s])))
         checks.extend([("plex", "identity", lambda: lab.op("plex", "get_identity")),
                        ("plex", "library_access", lambda: lab.http("plex", "/library/sections"))])
+        from plex_media import PlexAdminUnavailable, check_plex_media
+        if args.seed or media_manifest:
+            checks.append(("plex", "media_libraries", lambda: check_plex_media(lab)))
         for service, name, check in checks:
             result = {"service": service, "check": name}
             try:
@@ -170,6 +184,8 @@ def main():
                     result["verified"] = "successful live response"
                 else:
                     result["details"] = details
+            except PlexAdminUnavailable as error:
+                result.update(status="skipped", error=str(error))
             except urllib.error.HTTPError as error:
                 result.update(status="skipped" if service == "plex" and error.code in {401, 403} else "failed",
                               error=f"HTTP {error.code}: {error.reason}")

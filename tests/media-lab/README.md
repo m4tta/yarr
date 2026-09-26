@@ -21,17 +21,22 @@ inherited yarr configuration and proxy variables are excluded. Reports contain
 versions, image IDs, binary hash, source revision, and outcomes, never credentials. The default report is
 `.cache/media-lab/report.json`; use `--report PATH` to save elsewhere.
 
-Sonarr and Radarr checks cover status, quality profile create/read/update/delete,
-tag create/delete, and invalid parameter rejection. Live stdio MCP sessions verify
+Sonarr and Radarr checks cover status, quality profile and custom format
+create/read/update/delete, tag create/delete, reversible naming configuration,
+and invalid parameter rejection. Live stdio MCP sessions verify
 generated reads, invalid parameter errors, and restart refusal when the client
-does not support elicitation. Mutations are independently
+does not support elicitation, plus bounded health-check completion through both
+flat tools and default Code Mode. Mutations are independently
 verified through the services' HTTP APIs. Temporary profiles and tags are deleted
 in `finally` blocks. An interrupted process can leave a `yarr-lab-*` fixture;
 inspect those only in these disposable containers before removing them.
 
-Plex checks cover generated identity and anonymous library access. An HTTP 401/403
-on library access is reported as skipped and the report outcome becomes incomplete. No account claim is required
-or attempted, and this is not evidence of authenticated Plex administration.
+Plex checks cover generated identity and anonymous library access. With media
+fixtures enabled, the runner also creates temporary movie/TV libraries, refreshes
+them, independently verifies indexed content, and removes only those temporary
+libraries. An HTTP 401/403 is reported as skipped and the report outcome becomes
+incomplete. No account claim is required or attempted; account administration
+and authenticated remote access are outside this lab's coverage.
 
 ## Media fixtures
 
@@ -51,8 +56,48 @@ contains this run's unique filename. Media, root folders, and library entries re
 for manual testing; subsequent runs replace files carrying the synthetic fixture
 marker and reuse the same unmonitored entries. Plex can read the media volume.
 
-To use personally supplied media later, copy files into the lab volume rather
-than mounting production storage. The synthetic run does not access Unraid.
+For personally supplied media, download copies to an ignored local directory,
+then create a private manifest (paths are local to the Linux/WSL runner):
+
+```json
+{
+  "version": 1,
+  "radarr": {
+    "file": "/private/fixtures/movie.mkv", "metadataId": 10378,
+    "size": 12345, "sha256": "REPLACE_WITH_SHA256"
+  },
+  "sonarr": {
+    "file": "/private/fixtures/episode.mkv", "metadataId": 73244,
+    "seasonNumber": 1, "episodeNumbers": [1],
+    "size": 12345, "sha256": "REPLACE_WITH_SHA256"
+  }
+}
+```
+
+Use the actual TMDB movie ID or TVDB series ID and episode numbers for your files.
+Replace the example byte sizes and SHA-256 values with `stat` and `sha256sum`
+results. Keep the manifest and files under `.cache/real-media/`, which is ignored.
+
+```sh
+python3 tests/media-lab/lab.py test --binary target/debug/yarr \
+  --media-manifest .cache/real-media/manifest.json
+```
+
+Both files are validated before API work. The runner copies them into its named
+media volume, matches manual-import candidates, imports with copy mode, and
+rescans. It checks the new command-outcome envelope against independent HTTP
+reads and verifies imported sizes and SHA-256 hashes. Only filenames carrying
+the runner's `YarrReal` marker are replaced on subsequent runs; unique staging
+directories are cleaned in `finally` after completed imports. If command outcome
+remains unknown, staging is retained so an active import cannot lose its source.
+The harness resumes timed-out jobs by command ID for up to two minutes without
+resubmission. Library entries and copies remain
+unmonitored for inspection. Naming must preserve original filenames (the lab
+defaults); changed naming rules cause a verification failure.
+
+Reports omit private titles, paths, metadata IDs, byte counts, and hashes. Private error
+details stay under `.cache/real-media/`. Do not commit the manifest, media, or
+those diagnostics. Neither fixture runner connects to production storage.
 
 ## Addresses and lifecycle
 
@@ -67,6 +112,8 @@ python3 tests/media-lab/lab.py down
 ```
 
 Stopping preserves all named volumes. No command in the runner deletes volumes.
+Private fixture copies therefore remain in the named media volume after stopping;
+remove that specific lab volume explicitly when you no longer need the copies.
 Containers restart with their Docker daemon unless explicitly stopped.
 
 On the development Windows machine, Docker runs in the separate `codex-yarr-dev`
