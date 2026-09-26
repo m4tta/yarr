@@ -103,6 +103,30 @@ async fn execute_operation_requires_each_path_param_before_dispatch() {
 }
 
 #[tokio::test]
+async fn execute_operation_rejects_a_string_for_an_integer_parameter() {
+    let service = loopback_state().service;
+    let err = service
+        .execute_operation("sonarr", "get_series_by_id", &json!({"id": "7"}))
+        .await
+        .expect_err("invalid path parameter must error before HTTP");
+    let msg = err.to_string();
+    assert!(msg.contains("path parameter `id`"), "got: {msg}");
+    assert!(msg.contains("integer"), "got: {msg}");
+}
+
+#[tokio::test]
+async fn execute_operation_does_not_silently_drop_null_parameters() {
+    let service = loopback_state().service;
+    let err = service
+        .execute_operation("sonarr", "get_series", &json!({"tvdbId": null}))
+        .await
+        .expect_err("explicit null parameter must error before HTTP");
+    let msg = err.to_string();
+    assert!(msg.contains("query parameter `tvdbId`"), "got: {msg}");
+    assert!(msg.contains("cannot be null"), "got: {msg}");
+}
+
+#[tokio::test]
 async fn execute_operation_rejects_unknown_op() {
     let service = loopback_state().service;
     let err = service

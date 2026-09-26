@@ -125,7 +125,7 @@ async fn oauth_disable_static_token_rejects_configured_bearer() {
 }
 
 #[tokio::test]
-async fn authenticated_write_token_cannot_bypass_inner_destructive_elicitation() {
+async fn authenticated_write_token_cannot_bypass_high_impact_elicitation() {
     let dir = tempfile::tempdir().unwrap();
     let mut state = crate::testing::oauth_state(dir.path()).await;
     let (counting, calls, server) = counting_state(crate::config::ToolMode::Codemode).await;
@@ -205,6 +205,20 @@ async fn authenticated_write_token_cannot_bypass_inner_destructive_elicitation()
             }),
         ),
         (8, json!({"action": "snippet_run", "name": "dangerous"})),
+        (
+            9,
+            json!({
+                "action": "codemode",
+                "code": "async () => await sonarr.post_system_restart()"
+            }),
+        ),
+        (
+            10,
+            json!({
+                "action": "codemode",
+                "code": "async () => await callTool('api_post', {service:'sonarr', path:'/api/v3/system/restart', body:{}})"
+            }),
+        ),
     ] {
         let response = authenticated_mcp_call(
             flat.clone(),
@@ -222,10 +236,49 @@ async fn authenticated_write_token_cannot_bypass_inner_destructive_elicitation()
             "unexpected flat script tool error: {text}"
         );
     }
+    let direct = authenticated_mcp_call(
+        flat.clone(),
+        &token,
+        json!({
+            "jsonrpc": "2.0", "id": 11, "method": "tools/call",
+            "params": {
+                "name": "sonarr",
+                "arguments": {"action": "op", "op": "post_system_restart"}
+            }
+        }),
+    )
+    .await;
+    assert_eq!(direct["result"]["isError"], false, "response: {direct}");
+    let direct_text = direct["result"]["content"][0]["text"].as_str().unwrap();
+    let direct_result: serde_json::Value = serde_json::from_str(direct_text).unwrap();
+    assert_eq!(direct_result["declined"], true, "response: {direct}");
     assert_eq!(
         calls.load(Ordering::SeqCst),
         0,
-        "inner delete reached upstream"
+        "unconfirmed high-impact operation reached upstream"
+    );
+
+    let ordinary = authenticated_mcp_call(
+        flat,
+        &token,
+        json!({
+            "jsonrpc": "2.0", "id": 12, "method": "tools/call",
+            "params": {
+                "name": "sonarr",
+                "arguments": {
+                    "action": "op",
+                    "op": "post_tag",
+                    "args": {"body": {"label": "ordinary"}}
+                }
+            }
+        }),
+    )
+    .await;
+    assert_eq!(ordinary["result"]["isError"], false, "response: {ordinary}");
+    assert_eq!(
+        calls.load(Ordering::SeqCst),
+        1,
+        "ordinary mutation was unnecessarily gated"
     );
     server.abort();
 }

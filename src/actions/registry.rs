@@ -99,7 +99,7 @@ pub const ACTION_SPECS: &[ActionSpec] = &[
     // the same inner/outer destructive elicitation policy. Reached directly via
     // `call_tool` (e.g. flat tool mode), a
     // destructive op gets the same MCP elicitation prompt as any other
-    // destructive action — see `is_destructive_op_call` in `mcp/rmcp_server.rs`.
+    // high-impact action — see `actions::operation_effect`.
     ActionSpec {
         name: "op",
         description: "Dispatch a generated OpenAPI operation.",
@@ -267,7 +267,7 @@ pub struct CommandDescriptor {
     /// `destructive` is metadata only — nothing in the app layer refuses to run
     /// a destructive action, and there is no `confirm` parameter anywhere. On
     /// the MCP surface, `destructive` drives an elicitation prompt
-    /// (`src/mcp/elicit.rs::gate_destructive`) before dispatch, including inner
+    /// (`src/mcp/elicit.rs::gate_operation`) before dispatch, including inner
     /// Code Mode calls. Direct CLI execution retains its local trust boundary.
     /// The flag also drives schema/help annotations and is the SSOT for
     /// [`action_is_destructive`].

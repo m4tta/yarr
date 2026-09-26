@@ -87,6 +87,10 @@ tower-http = { version = "0.7", features = ["cors", "limit", "trace"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 schemars.workspace = true
+jsonschema = { version = "0.47", default-features = false }
+# Two vendored OpenAPI documents are YAML. Keep their runtime parsing aligned
+# with the generator rather than maintaining a second converted copy.
+noyalib = { version = "0.0.15", default-features = false, features = ["std", "strict-deserialise"] }
 
 # Time
 chrono = { version = "0.4", features = ["serde"] }

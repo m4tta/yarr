@@ -4,10 +4,14 @@ use anyhow::{Context, Result, anyhow, bail, ensure};
 use base64::Engine as _;
 use serde_json::Value;
 
-use crate::openapi::{BodyEncoding, OperationSpec, ParameterStyle, RepresentationSpec};
-use crate::yarr::{EncodedRequestBody, MultipartField};
+use crate::{
+    config::ServiceKind,
+    openapi::{BodyEncoding, OperationSpec, ParameterStyle, RepresentationSpec},
+    yarr::{EncodedRequestBody, MultipartField},
+};
 
 use super::parameters::serialize_named;
+use super::validation::validate_json_body_schema;
 
 const MAX_UPLOAD_BYTES: usize = 32 * 1024 * 1024;
 
@@ -38,6 +42,7 @@ pub(super) fn select_response<'a>(
 }
 
 pub(super) fn encode_request_body(
+    kind: ServiceKind,
     spec: &OperationSpec,
     args: &serde_json::Map<String, Value>,
 ) -> Result<Option<EncodedRequestBody>> {
@@ -78,15 +83,22 @@ pub(super) fn encode_request_body(
         return Ok(None);
     }
     match representation.encoding {
-        BodyEncoding::Json => args
-            .get("body")
-            .cloned()
-            .map(|value| EncodedRequestBody::Json {
-                media_type: representation.media_type.to_string(),
+        BodyEncoding::Json => {
+            let value = args
+                .get("body")
+                .ok_or_else(|| anyhow!("operation `{}` requires `body`", spec.name))?;
+            validate_json_body_schema(
+                kind,
+                spec.name,
+                representation.schema,
                 value,
-            })
-            .ok_or_else(|| anyhow!("operation `{}` requires `body`", spec.name))
-            .map(Some),
+                &format!("operation `{}` JSON body", spec.name),
+            )?;
+            Ok(Some(EncodedRequestBody::Json {
+                media_type: representation.media_type.to_string(),
+                value: value.clone(),
+            }))
+        }
         BodyEncoding::FormUrlEncoded => Ok(Some(EncodedRequestBody::Form(form_pairs(
             required_object_body(spec, args)?,
             representation.encoding_metadata,

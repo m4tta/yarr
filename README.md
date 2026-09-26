@@ -2,6 +2,10 @@
 
 Self-hosted media fleet operations across Sonarr, Radarr, Plex, and related apps over MCP and CLI.
 
+This fork adds request validation, shared MCP operation-effect policy, and an
+[isolated media lab](tests/media-lab/README.md). Build from source to use these
+changes; the release installers and image references below belong to upstream.
+
 If you run Claude Code, Codex, or Gemini CLI against a self-hosted media stack,
 `yarr` gives an agent one consistent way to query and control all of it instead
 of eleven different ad hoc integrations. It is an upstream-client MCP server:
@@ -39,7 +43,8 @@ kinds it knows about, and only does what you or your agent ask it to do.
 
 ## Naming
 
-This repository is published at `github.com/dinglebear-ai/yarr`.
+Upstream is published at `github.com/dinglebear-ai/yarr`; this fork is
+`github.com/m4tta/yarr`.
 
 The Rust package and installed binary are both `yarr`. The npm launcher package
 is `yarr-mcp` because the shorter `yarr` name is occupied on npm; installing the
@@ -428,11 +433,20 @@ bearer or OAuth transport auth. `service_status` requires `yarr:read`.
 Credentialed passthrough, generated operations, curated write operations, and
 Code Mode require `yarr:write`; write satisfies read.
 
-Generated DELETE operations, `api_delete`, `download_remove`,
-`stats_delete_image_cache`, and `trace_terminate_stream` are destructive. CLI
-commands dispatch them immediately. MCP callers get an interactive elicitation
-prompt at the actual dispatch point, including inside Code Mode, with no call
-argument or nested `callTool` path that can skip it.
+One shared effect policy classifies generated operations and raw writes for both
+direct MCP calls and Code Mode. Destructive actions include DELETE, Plex trash
+emptying, and Sonarr/Radarr backup restoration. Disruptive actions include Plex
+session termination and update application, Sonarr/Radarr restart/shutdown, and
+recognized update or API-key-reset commands. Unknown raw POST/PUT routes also
+require confirmation. Ordinary known writes retain their existing behavior.
+MCP asks through elicitation at dispatch and refuses gated calls when confirmation
+is unavailable. Trusted CLI commands still execute immediately.
+
+Generated operations validate declared parameters and JSON bodies before sending
+them upstream. Field errors mask submitted values. Validation uses the bundled
+specification, so it cannot enforce rules absent from that specification. A narrow
+Sonarr/Radarr command exception accepts command-specific fields omitted from the
+generic `CommandResource` schema while validating its declared properties.
 
 Responses are capped by the shared token-limit layer before they are returned to
 MCP clients.
@@ -486,6 +500,10 @@ not patched by hand:
   promoted immutable `@sha256:` digest.
 
 ## Development
+
+For a disposable Sonarr/Radarr/Plex stack and live CRUD/media checks, see the
+[isolated media lab](tests/media-lab/README.md). It uses loopback ports and its own
+Docker volumes, and needs no production service credentials.
 
 ```bash
 cargo run -- help

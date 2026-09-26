@@ -1,4 +1,4 @@
-//! Tests for the destructive-delete elicitation gate.
+//! Tests for the high-impact-operation elicitation gate.
 //!
 //! The peer round-trip is not exercised here (it needs a live client); instead we
 //! cover the pure decision surface: the prompt text, the `normalize`
@@ -12,10 +12,20 @@ use super::*;
 
 #[test]
 fn confirm_message_names_action_and_service() {
-    let msg = confirm_message("delete", "sonarr");
+    let msg = confirm_message(
+        "delete",
+        "sonarr",
+        crate::actions::OperationEffect::Destructive,
+    );
     assert!(msg.contains("delete"));
     assert!(msg.contains("sonarr"));
-    assert!(msg.contains("cannot be undone"));
+    assert!(msg.contains("permanently delete or replace"));
+    let disruptive = confirm_message(
+        "terminate_session",
+        "plex",
+        crate::actions::OperationEffect::Disruptive,
+    );
+    assert!(disruptive.contains("interrupt active work"));
 }
 
 // ── normalize: rmcp Ok result → ElicitOutcome (Err arms not constructible) ───────
@@ -23,7 +33,7 @@ fn confirm_message_names_action_and_service() {
 #[test]
 fn normalize_accept_with_confirm_true_is_confirmed() {
     assert_eq!(
-        normalize(Ok(Some(DeleteConfirmation { confirm: true }))),
+        normalize(Ok(Some(OperationConfirmation { confirm: true }))),
         ElicitOutcome::Confirmed
     );
 }
@@ -31,7 +41,7 @@ fn normalize_accept_with_confirm_true_is_confirmed() {
 #[test]
 fn normalize_accept_with_confirm_false_refuses() {
     assert_eq!(
-        normalize(Ok(Some(DeleteConfirmation { confirm: false }))),
+        normalize(Ok(Some(OperationConfirmation { confirm: false }))),
         ElicitOutcome::Refused
     );
 }
@@ -45,15 +55,18 @@ fn normalize_empty_content_refuses() {
 
 #[test]
 fn classify_confirmed_proceeds() {
-    assert_eq!(classify(ElicitOutcome::Confirmed), DeleteGate::Proceed);
+    assert_eq!(classify(ElicitOutcome::Confirmed), OperationGate::Proceed);
 }
 
 #[test]
 fn classify_refused_declines() {
-    assert_eq!(classify(ElicitOutcome::Refused), DeleteGate::Declined);
+    assert_eq!(classify(ElicitOutcome::Refused), OperationGate::Declined);
 }
 
 #[test]
 fn classify_unsupported_declines() {
-    assert_eq!(classify(ElicitOutcome::Unsupported), DeleteGate::Declined);
+    assert_eq!(
+        classify(ElicitOutcome::Unsupported),
+        OperationGate::Declined
+    );
 }

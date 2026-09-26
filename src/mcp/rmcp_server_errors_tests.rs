@@ -161,41 +161,62 @@ fn declined_result_reports_declined_and_nothing_changed() {
 }
 
 #[test]
-fn destructive_op_call_flags_generated_delete_ops() {
-    // sonarr.delete_series_by_id is a generated DELETE op — action_is_destructive
-    // has no notion of `op`'s underlying HTTP method, so the MCP elicitation gate
-    // checks this separately (is_destructive_op_call) to cover it too, e.g. when
-    // reached directly via flat tool mode.
+fn tool_call_effect_uses_shared_generated_operation_policy() {
+    use crate::actions::OperationEffect;
+
     let state = sonarr_only_state();
-    assert!(is_destructive_op_call(
-        &state,
-        "sonarr",
-        &json!({ "op": "delete_series_by_id" })
-    ));
+    assert_eq!(
+        operation_effect_for_tool_call(
+            &state,
+            "sonarr",
+            "op",
+            &json!({"op": "delete_series_by_id"}),
+        )
+        .unwrap(),
+        OperationEffect::Destructive
+    );
+    assert_eq!(
+        operation_effect_for_tool_call(
+            &state,
+            "sonarr",
+            "op",
+            &json!({"op": "post_system_restart"}),
+        )
+        .unwrap(),
+        OperationEffect::Disruptive
+    );
+    assert_eq!(
+        operation_effect_for_tool_call(
+            &state,
+            "sonarr",
+            "op",
+            &json!({"op": "post_tag", "args": {"body": {"label": "ordinary"}}}),
+        )
+        .unwrap(),
+        OperationEffect::Mutating
+    );
+    assert_eq!(
+        operation_effect_for_tool_call(&state, "sonarr", "op", &json!({"op": "get_series"}),)
+            .unwrap(),
+        OperationEffect::ReadOnly
+    );
 }
 
 #[test]
-fn destructive_op_call_ignores_non_delete_ops() {
+fn tool_call_effect_rejects_unknown_or_malformed_operations() {
     let state = sonarr_only_state();
-    assert!(!is_destructive_op_call(
-        &state,
-        "sonarr",
-        &json!({ "op": "get_series" })
-    ));
-}
-
-#[test]
-fn destructive_op_call_ignores_unknown_service_or_op() {
-    let state = sonarr_only_state();
-    assert!(!is_destructive_op_call(
-        &state,
-        "not-configured",
-        &json!({ "op": "delete_series_by_id" })
-    ));
-    assert!(!is_destructive_op_call(
-        &state,
-        "sonarr",
-        &json!({ "op": "no_such_op" })
-    ));
-    assert!(!is_destructive_op_call(&state, "sonarr", &json!({})));
+    assert!(
+        operation_effect_for_tool_call(
+            &state,
+            "not-configured",
+            "op",
+            &json!({"op": "delete_series_by_id"}),
+        )
+        .is_err()
+    );
+    assert!(
+        operation_effect_for_tool_call(&state, "sonarr", "op", &json!({"op": "no_such_op"}),)
+            .is_err()
+    );
+    assert!(operation_effect_for_tool_call(&state, "sonarr", "op", &json!({})).is_err());
 }

@@ -5,6 +5,7 @@
 //! appends a const slice rather than editing a giant enum):
 //!
 //!   - [`model`]    — `YarrAction`, `ActionSpec`, `ValidationError`, scopes
+//!   - [`effects`]  — shared operation-effect classification for MCP policy
 //!   - [`registry`] — `ACTION_SPECS`, name/scope lookups, the `CommandDescriptor`
 //!     table, and `action_allowed_for_kind` validation
 //!   - [`parse`]    — shared param extractors + `YarrAction` construction
@@ -16,6 +17,7 @@
 
 pub mod commands;
 pub mod dispatch;
+pub mod effects;
 pub mod help;
 pub mod model;
 pub mod parse;
@@ -24,6 +26,7 @@ pub mod registry;
 // ── re-exports: stable `crate::actions::` surface ───────────────────────────────
 
 pub use dispatch::execute_service_action;
+pub use effects::{OperationEffect, operation_effect};
 pub use help::rest_help;
 #[cfg(test)]
 pub use model::DENY_SCOPE;

@@ -9,6 +9,7 @@ use crate::yarr::{OpenApiRequest, helpers::build_operation_url};
 
 mod body;
 mod parameters;
+mod validation;
 
 use body::{encode_request_body, select_response};
 use parameters::prepare_parameters;
@@ -40,7 +41,7 @@ impl YarrService {
             !object.contains_key("multipartFixture"),
             "multipartFixture is not supported; submit multipartFileBase64 and fileName"
         );
-        let encoded = prepare_parameters(spec, object)?;
+        let encoded = prepare_parameters(config.kind, spec, object)?;
         let path = encoded
             .path
             .iter()
@@ -52,7 +53,7 @@ impl YarrService {
             .map(|(name, value)| (name.as_str(), value.clone()))
             .collect::<Vec<_>>();
         let url = build_operation_url(config, spec.path, &path, &query)?;
-        let body = encode_request_body(spec, object)?;
+        let body = encode_request_body(config.kind, spec, object)?;
         let response = select_response(spec, object)?;
         self.client_ref()
             .request_openapi_url(OpenApiRequest {

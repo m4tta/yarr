@@ -158,6 +158,31 @@ impl YarrAction {
             Self::Curated { name, .. } => name,
         }
     }
+
+    /// Configured service identity targeted by this action, when it addresses
+    /// one service. Code Mode and snippet actions are service-less at the outer
+    /// boundary; their inner actions are assessed independently.
+    pub fn target_service(&self) -> Option<&str> {
+        match self {
+            Self::Help
+            | Self::CodeMode { .. }
+            | Self::SnippetList
+            | Self::SnippetSave { .. }
+            | Self::SnippetRun { .. }
+            | Self::SnippetDelete { .. } => None,
+            Self::ServiceStatus { service }
+            | Self::ApiGet { service, .. }
+            | Self::ApiPost { service, .. }
+            | Self::ApiPut { service, .. }
+            | Self::ApiDelete { service, .. }
+            | Self::Op { service, .. } => Some(service),
+            Self::Curated { params, .. } => params
+                .get("service")
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .filter(|service| !service.is_empty()),
+        }
+    }
 }
 
 #[cfg(test)]

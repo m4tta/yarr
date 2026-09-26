@@ -7,13 +7,12 @@
 //! runs, so a curated command can never reach an incompatible kind regardless of
 //! which transport invoked it.
 
-use anyhow::Result;
-use serde_json::Value;
-
 use super::help::help_text;
 use super::model::{ValidationError, YarrAction};
 use super::registry::{action_allowed_for_kind, curated_command, valid_actions_for_kind};
 use crate::app::YarrService;
+use anyhow::Result;
+use serde_json::Value;
 
 /// Validate that `action` (by name) may run against the service named `service_name`.
 ///
@@ -48,39 +47,10 @@ pub fn validate_action_for_service(
     .into())
 }
 
-/// The service name an action targets, if any. Infra actions that don't address
-/// a service (`help`) return `None`.
-fn target_service(action: &YarrAction) -> Option<&str> {
-    match action {
-        // Infra actions that don't address a single service: `help` and `codemode`
-        // (the script reaches services per-call via the baked-in `<service>.<verb>`
-        // callables).
-        YarrAction::Help
-        | YarrAction::CodeMode { .. }
-        | YarrAction::SnippetList
-        | YarrAction::SnippetSave { .. }
-        | YarrAction::SnippetRun { .. }
-        | YarrAction::SnippetDelete { .. } => None,
-        YarrAction::ServiceStatus { service }
-        | YarrAction::ApiGet { service, .. }
-        | YarrAction::ApiPost { service, .. }
-        | YarrAction::ApiPut { service, .. }
-        | YarrAction::ApiDelete { service, .. }
-        | YarrAction::Op { service, .. } => Some(service),
-        // Curated commands all carry `service` in their raw params (validated at
-        // parse time), so the action×kind guard can resolve the kind for them too.
-        YarrAction::Curated { params, .. } => params
-            .get("service")
-            .and_then(Value::as_str)
-            .map(str::trim)
-            .filter(|s| !s.is_empty()),
-    }
-}
-
 pub async fn execute_service_action(service: &YarrService, action: &YarrAction) -> Result<Value> {
     // Shared action×kind guard: runs for every action that targets a service,
     // on both the CLI and MCP paths. No-op for generic/infra actions.
-    if let Some(service_name) = target_service(action) {
+    if let Some(service_name) = action.target_service() {
         validate_action_for_service(service, action.name(), service_name)?;
     }
     match action {

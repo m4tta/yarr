@@ -1,0 +1,70 @@
+name: yarr-media-lab
+
+# Disposable application instances. Only loopback ports and lab-owned volumes.
+services:
+  sonarr:
+    restart: unless-stopped
+    image: lscr.io/linuxserver/sonarr:4.0.20.3014-ls326@sha256:f247545d23ba8b233d6604575347e48a623fe6ad75dda02348bf81917f3b5c06
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
+    ports:
+      - "127.0.0.1:18989:8989"
+    volumes:
+      - sonarr-config:/config
+      - media:/data
+    mem_limit: 768m
+    cpus: 2
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8989/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 36
+
+  radarr:
+    restart: unless-stopped
+    image: lscr.io/linuxserver/radarr:6.4.4.10685-ls318@sha256:adb6c09d6b729ea5e642c99cea35af72702ef476bf4763f153299ac5db9f0b4f
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
+    ports:
+      - "127.0.0.1:17878:7878"
+    volumes:
+      - radarr-config:/config
+      - media:/data
+    mem_limit: 768m
+    cpus: 2
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:7878/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 36
+
+  plex:
+    restart: unless-stopped
+    image: lscr.io/linuxserver/plex:1.43.4.10903-e5521bd8c-ls325@sha256:be083133dfe001b6caed5a321720e6db9d38fdde1ea8f9d29340d40057a7fa53
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
+      VERSION: docker
+    ports:
+      - "127.0.0.1:32401:32400"
+    volumes:
+      - plex-config:/config
+      - media:/data:ro
+    mem_limit: 1g
+    cpus: 2
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:32400/identity"]
+      interval: 5s
+      timeout: 3s
+      retries: 36
+
+volumes:
+  sonarr-config:
+  radarr-config:
+  plex-config:
+  media:

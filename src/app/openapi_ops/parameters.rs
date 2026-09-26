@@ -3,7 +3,12 @@
 use anyhow::{Result, anyhow, bail};
 use serde_json::Value;
 
-use crate::openapi::{OperationSpec, ParameterLocation, ParameterSpec, ParameterStyle};
+use crate::{
+    config::ServiceKind,
+    openapi::{OperationSpec, ParameterLocation, ParameterSpec, ParameterStyle},
+};
+
+use super::validation::validate_schema;
 
 pub(super) struct EncodedParameters {
     pub(super) path: Vec<(String, String)>,
@@ -12,6 +17,7 @@ pub(super) struct EncodedParameters {
 }
 
 pub(super) fn prepare_parameters(
+    kind: ServiceKind,
     spec: &OperationSpec,
     args: &serde_json::Map<String, Value>,
 ) -> Result<EncodedParameters> {
@@ -22,8 +28,8 @@ pub(super) fn prepare_parameters(
     };
     let mut cookies = Vec::new();
     for parameter in spec.parameters {
-        let value = args.get(parameter.name).filter(|value| !value.is_null());
-        if parameter.required && value.is_none() {
+        let value = args.get(parameter.name);
+        if parameter.required && value.is_none_or(Value::is_null) {
             bail!(
                 "operation `{}` requires {} parameter `{}`",
                 spec.name,
@@ -34,6 +40,25 @@ pub(super) fn prepare_parameters(
         let Some(value) = value else {
             continue;
         };
+        if value.is_null() {
+            bail!(
+                "operation `{}` {} parameter `{}` cannot be null",
+                spec.name,
+                location_name(parameter.location),
+                parameter.name
+            );
+        }
+        validate_schema(
+            kind,
+            parameter.schema,
+            value,
+            &format!(
+                "operation `{}` {} parameter `{}`",
+                spec.name,
+                location_name(parameter.location),
+                parameter.name
+            ),
+        )?;
         let encoded = serialize_parameter(parameter, value)?;
         match parameter.location {
             ParameterLocation::Path => output.path.extend(encoded),

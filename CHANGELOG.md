@@ -9,8 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Validate generated OpenAPI parameters and JSON request bodies before sending requests, with local schema references, nullable fields, and masked field errors.
+- Apply one semantic effect policy to flat MCP and Code Mode calls, including disruptive POST/PUT operations and destructive Plex trash and Servarr restore operations.
 - Pin the container builder to Rust 1.97.1 and enforce parity with the repository toolchain.
 - Keep the configurable Compose env file optional so local and validation deployments do not require a host-specific file.
+
+### Added
+
+- Add an isolated Docker media lab for Sonarr, Radarr, and Plex with guarded live CRUD tests, synthetic media scanning, and reproducible result reports. See `tests/media-lab/README.md`.
 
 ### Changed
 

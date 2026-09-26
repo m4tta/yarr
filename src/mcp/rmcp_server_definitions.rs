@@ -84,29 +84,33 @@ pub(super) fn tool_result_from_json(value: Value) -> Result<CallToolResult, Erro
     Ok(CallToolResult::success(vec![ContentBlock::text(text)]))
 }
 
-/// Whether `arguments` dispatches a generated DELETE operation via the `op`
-/// action (e.g. `{"action": "op", "op": "delete_series_by_id"}` against the
-/// `sonarr` tool in `flat` mode). `action_is_destructive` has no notion of
-/// `op`'s underlying HTTP method, so this is checked separately — otherwise a
-/// generated DELETE op would dispatch through `call_tool` with no elicitation
-/// prompt at all.
-pub(super) fn is_destructive_op_call(state: &AppState, tool_name: &str, arguments: &Value) -> bool {
-    let Some(op_name) = arguments.get("op").and_then(Value::as_str) else {
-        return false;
-    };
-    let Ok(Some(kind)) = state.service.kind_of(tool_name) else {
-        return false;
-    };
-    crate::openapi::find_operation(kind, op_name).is_some_and(|spec| spec.method.is_delete())
+/// Parse the effective action exactly as dispatch will see it, then apply the
+/// shared domain effect policy. Flat tools bake the configured service identity
+/// into the call; the single `yarr` tool remains service-less Code Mode.
+pub(super) fn operation_effect_for_tool_call(
+    state: &AppState,
+    tool_name: &str,
+    action: &str,
+    arguments: &Value,
+) -> Result<crate::actions::OperationEffect, ErrorData> {
+    let mut params = arguments.as_object().cloned().unwrap_or_default();
+    params.insert("action".to_owned(), Value::String(action.to_owned()));
+    if tool_name != crate::mcp::schemas::YARR_TOOL_NAME {
+        params.insert("service".to_owned(), Value::String(tool_name.to_owned()));
+    }
+    let parsed = crate::actions::YarrAction::from_mcp_args(&Value::Object(params))
+        .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+    crate::actions::operation_effect(&state.service, &parsed)
+        .map_err(|error| ErrorData::invalid_params(error.to_string(), None))
 }
 
-/// Result returned when a destructive action is declined at the elicitation
+/// Result returned when a high-impact action is declined at the elicitation
 /// prompt: a structured success payload (nothing was changed), not an error.
 pub(super) fn declined_result(action: &str) -> Result<CallToolResult, ErrorData> {
     tool_result_from_json(serde_json::json!({
         "declined": true,
         "action": action,
-        "note": "destructive action not confirmed; nothing was changed",
+        "note": "high-impact action not confirmed; nothing was changed",
     }))
 }
 
