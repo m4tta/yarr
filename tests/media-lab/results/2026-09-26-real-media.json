@@ -1,0 +1,327 @@
+{
+  "started_at": "2026-09-26T21:55:50.244398+00:00",
+  "scope": "isolated live smoke/CRUD; not exhaustive API coverage",
+  "services": {
+    "sonarr": {
+      "image": "lscr.io/linuxserver/sonarr:4.0.20.3014-ls326@sha256:f247545d23ba8b233d6604575347e48a623fe6ad75dda02348bf81917f3b5c06",
+      "image_id": "sha256:f247545d23ba8b233d6604575347e48a623fe6ad75dda02348bf81917f3b5c06",
+      "version": "4.0.20.3014"
+    },
+    "radarr": {
+      "image": "lscr.io/linuxserver/radarr:6.4.4.10685-ls318@sha256:adb6c09d6b729ea5e642c99cea35af72702ef476bf4763f153299ac5db9f0b4f",
+      "image_id": "sha256:adb6c09d6b729ea5e642c99cea35af72702ef476bf4763f153299ac5db9f0b4f",
+      "version": "6.4.4.10685"
+    },
+    "plex": {
+      "image": "lscr.io/linuxserver/plex:1.43.4.10903-e5521bd8c-ls325@sha256:be083133dfe001b6caed5a321720e6db9d38fdde1ea8f9d29340d40057a7fa53",
+      "image_id": "sha256:be083133dfe001b6caed5a321720e6db9d38fdde1ea8f9d29340d40057a7fa53"
+    }
+  },
+  "checks": [
+    {
+      "service": "sonarr",
+      "check": "status",
+      "status": "passed"
+    },
+    {
+      "service": "sonarr",
+      "check": "quality_profile_crud",
+      "status": "passed",
+      "details": {
+        "operations": [
+          "get_qualityprofile",
+          "post_qualityprofile",
+          "get_qualityprofile_by_id",
+          "put_qualityprofile_by_id",
+          "delete_qualityprofile_by_id"
+        ],
+        "verified": "independent HTTP read-back after create, update, delete"
+      }
+    },
+    {
+      "service": "sonarr",
+      "check": "tag_crud",
+      "status": "passed",
+      "details": {
+        "operations": [
+          "post_tag",
+          "delete_tag_by_id"
+        ],
+        "verified": "create/delete read-back"
+      }
+    },
+    {
+      "service": "sonarr",
+      "check": "configuration_crud",
+      "status": "passed",
+      "details": {
+        "custom_format": {
+          "operations": [
+            "post_customformat",
+            "get_customformat_by_id",
+            "put_customformat_by_id",
+            "delete_customformat_by_id"
+          ],
+          "verified": "create/read/update/delete with independent HTTP read-back"
+        },
+        "naming_config": {
+          "field": "renameEpisodes",
+          "operations": [
+            "get_config_naming",
+            "put_config_naming_by_id",
+            "get_config_naming_by_id"
+          ],
+          "verified": "one flag changed with no collateral fields, then exact restoration"
+        }
+      }
+    },
+    {
+      "service": "sonarr",
+      "check": "invalid_parameter",
+      "status": "passed",
+      "details": {
+        "verified": "CLI reports parameter schema rejection",
+        "operation": "get_qualityprofile_by_id"
+      }
+    },
+    {
+      "service": "sonarr",
+      "check": "mcp_dispatch",
+      "status": "passed",
+      "details": {
+        "transport": "stdio",
+        "tool_mode": "flat",
+        "tool": "sonarr",
+        "verified": [
+          "generated read",
+          "invalid parameter rejection",
+          "high-impact call declined without elicitation",
+          "bounded command wait with independent completion verification"
+        ]
+      }
+    },
+    {
+      "service": "sonarr",
+      "check": "mcp_codemode_wait",
+      "status": "passed",
+      "details": {
+        "transport": "stdio",
+        "tool_mode": "codemode",
+        "tool": "yarr",
+        "verified": [
+          "service generated callable through Code Mode",
+          "bounded command wait with independent completion verification"
+        ]
+      }
+    },
+    {
+      "service": "sonarr",
+      "check": "media_scan",
+      "status": "passed",
+      "details": {
+        "fixture": "generated 10-minute blue video with silent audio (not original media)",
+        "metadata": "The Office (US), S01E01",
+        "verified": "scan command completed and independent file API found current unique fixture",
+        "monitoring": "entry unmonitored; search-on-add disabled for new entries"
+      }
+    },
+    {
+      "service": "sonarr",
+      "check": "real_media_import_scan",
+      "status": "passed",
+      "details": {
+        "fixture": "privately supplied local episode",
+        "command_ids": {
+          "import": 228,
+          "scan": 229
+        },
+        "verified": [
+          "manual import matched metadata",
+          "import and scan completion independently confirmed",
+          "file API size matched",
+          "imported SHA-256 matched local source"
+        ],
+        "monitoring": "unmonitored; search-on-add disabled"
+      }
+    },
+    {
+      "service": "radarr",
+      "check": "status",
+      "status": "passed"
+    },
+    {
+      "service": "radarr",
+      "check": "quality_profile_crud",
+      "status": "passed",
+      "details": {
+        "operations": [
+          "get_qualityprofile",
+          "post_qualityprofile",
+          "get_qualityprofile_by_id",
+          "put_qualityprofile_by_id",
+          "delete_qualityprofile_by_id"
+        ],
+        "verified": "independent HTTP read-back after create, update, delete"
+      }
+    },
+    {
+      "service": "radarr",
+      "check": "tag_crud",
+      "status": "passed",
+      "details": {
+        "operations": [
+          "post_tag",
+          "delete_tag_by_id"
+        ],
+        "verified": "create/delete read-back"
+      }
+    },
+    {
+      "service": "radarr",
+      "check": "configuration_crud",
+      "status": "passed",
+      "details": {
+        "custom_format": {
+          "operations": [
+            "post_customformat",
+            "get_customformat_by_id",
+            "put_customformat_by_id",
+            "delete_customformat_by_id"
+          ],
+          "verified": "create/read/update/delete with independent HTTP read-back"
+        },
+        "naming_config": {
+          "field": "renameMovies",
+          "operations": [
+            "get_config_naming",
+            "put_config_naming_by_id",
+            "get_config_naming_by_id"
+          ],
+          "verified": "one flag changed with no collateral fields, then exact restoration"
+        }
+      }
+    },
+    {
+      "service": "radarr",
+      "check": "invalid_parameter",
+      "status": "passed",
+      "details": {
+        "verified": "CLI reports parameter schema rejection",
+        "operation": "get_qualityprofile_by_id"
+      }
+    },
+    {
+      "service": "radarr",
+      "check": "mcp_dispatch",
+      "status": "passed",
+      "details": {
+        "transport": "stdio",
+        "tool_mode": "flat",
+        "tool": "radarr",
+        "verified": [
+          "generated read",
+          "invalid parameter rejection",
+          "high-impact call declined without elicitation",
+          "bounded command wait with independent completion verification"
+        ]
+      }
+    },
+    {
+      "service": "radarr",
+      "check": "mcp_codemode_wait",
+      "status": "passed",
+      "details": {
+        "transport": "stdio",
+        "tool_mode": "codemode",
+        "tool": "yarr",
+        "verified": [
+          "service generated callable through Code Mode",
+          "bounded command wait with independent completion verification"
+        ]
+      }
+    },
+    {
+      "service": "radarr",
+      "check": "media_scan",
+      "status": "passed",
+      "details": {
+        "fixture": "generated 10-minute blue video with silent audio (not original media)",
+        "metadata": "Big Buck Bunny (2008)",
+        "verified": "scan command completed and independent file API found current unique fixture",
+        "monitoring": "entry unmonitored; search-on-add disabled for new entries"
+      }
+    },
+    {
+      "service": "radarr",
+      "check": "real_media_import_scan",
+      "status": "passed",
+      "details": {
+        "fixture": "privately supplied local movie",
+        "command_ids": {
+          "import": 226,
+          "scan": 227
+        },
+        "verified": [
+          "manual import matched metadata",
+          "import and scan completion independently confirmed",
+          "file API size matched",
+          "imported SHA-256 matched local source"
+        ],
+        "monitoring": "unmonitored; search-on-add disabled"
+      }
+    },
+    {
+      "service": "plex",
+      "check": "identity",
+      "status": "passed",
+      "verified": "successful live response"
+    },
+    {
+      "service": "plex",
+      "check": "library_access",
+      "status": "passed",
+      "verified": "successful live response"
+    },
+    {
+      "service": "plex",
+      "check": "media_libraries",
+      "status": "passed",
+      "details": {
+        "sections": {
+          "movie": {
+            "item_count": 2,
+            "expected_file_count": 2,
+            "indexed_file_count": 2,
+            "types": [
+              "movie"
+            ]
+          },
+          "show": {
+            "item_count": 2,
+            "expected_file_count": 2,
+            "indexed_file_count": 2,
+            "types": [
+              "episode"
+            ]
+          }
+        },
+        "operations": [
+          "add_section",
+          "refresh_section",
+          "list_content",
+          "delete_library_section"
+        ],
+        "verified": "generated create/refresh/read plus independent bounded verification of every marked Part.file path"
+      }
+    }
+  ],
+  "binary_sha256": "bb17235149eeb933876ff229bbd43bc49d3c7b5078f4e6b126c271bc0f63e33e",
+  "binary_path": "/root/yarr-target/debug/yarr",
+  "seed": true,
+  "real_media": true,
+  "git_revision": "c813420cf0dc5a2f8578486b0d268da776d118ec",
+  "source_dirty": true,
+  "docker_engine_id": "8068737a-2f35-42e2-b65d-472d33e400bf",
+  "finished_at": "2026-09-26T21:56:49.702195+00:00",
+  "outcome": "passed"
+}

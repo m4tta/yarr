@@ -1,5 +1,51 @@
 # Verification record — 2026-09-26
 
+## Real-media and command-outcome increment
+
+[The second live report](2026-09-26-real-media.json) verifies the implementation
+committed as `87771d6`. The run started before that commit, so it truthfully records
+the preceding revision and `source_dirty: true`; the implementation was committed
+unchanged after the run. The report includes the tested binary's SHA-256.
+
+```sh
+python3 tests/media-lab/lab.py test --binary /root/yarr-target/debug/yarr --seed \
+  --media-manifest .cache/real-media/manifest.json \
+  --report .cache/media-lab/final-candidate.json
+```
+
+| Check | Result |
+| --- | --- |
+| Full Rust workspace tests | 787 passed; 4 documentation examples ignored |
+| Root package all-target clippy, warnings denied | Passed |
+| Workspace formatting | Passed |
+| Python lab unit tests | 22 passed |
+| Live isolated lab | 21 passed; none skipped |
+| Generated tool docs, schema docs, documentation links | Passed |
+| Static pattern contracts | Passed with existing advisory file-size warnings |
+| ASCII and diff checks | Passed |
+
+The lab imported a private movie copy and episode copy, independently verified
+completed import/rescan commands and file records, and matched imported SHA-256
+hashes against the local sources. Both flat MCP and default Code Mode completed
+health-check commands and agreed with independent upstream reads. Invalid and
+unsupported wait options, submission/poll deadlines, failed commands, malformed
+poll responses, and no-resubmission behavior are covered by Rust tests.
+
+Custom formats and quality profiles completed CRUD checks; naming flags were
+changed and restored exactly. Plex's generated library-creation route and query
+contract were corrected after a live 404. Fresh Plex movie/TV sections indexed
+all four exact fixture paths (two synthetic, two private copies); temporary Plex
+sections were then removed. Private titles, paths, metadata IDs, hashes, and
+media are excluded from the committed report.
+
+Production access was limited to read-only metadata retrieval and copying two
+source files over SSH. Lab media copies and unmonitored library entries remain
+in isolated volumes for inspection. This verifies the listed workflows, not every
+API endpoint, authenticated Plex account administration, download clients, or
+indexer integration. Those areas remain follow-up work.
+
+## Initial synthetic-media baseline
+
 [The machine-readable live report](2026-09-26.json) records the implementation
 revision, binary hash, image digests, service versions, and each check's outcome.
 It was produced by:
