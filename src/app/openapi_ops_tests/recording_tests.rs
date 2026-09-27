@@ -1,6 +1,50 @@
 use super::*;
 
 #[tokio::test]
+async fn invalid_form_and_multipart_fields_never_reach_the_network() {
+    let (service, mut requests) = recording_service().await;
+    let config = service.service("sonarr").unwrap().clone();
+    for (media_type, encoding) in [
+        (
+            "application/x-www-form-urlencoded",
+            BodyEncoding::FormUrlEncoded,
+        ),
+        ("multipart/form-data", BodyEncoding::Multipart),
+    ] {
+        let representations = Box::leak(vec![RepresentationSpec {
+            status: None,
+            media_type,
+            encoding,
+            schema: r#"{"type":"object","required":["hashes","limit"],"properties":{"hashes":{"type":"string","minLength":1},"limit":{"type":"integer","minimum":0}},"additionalProperties":false}"#,
+            encoding_metadata: "null",
+        }].into_boxed_slice());
+        let spec = operation(
+            HttpMethod::Post,
+            "/validated-form",
+            &[],
+            Some(RequestBodySpec {
+                required: true,
+                representations,
+            }),
+            JSON_RESPONSE,
+        );
+        for body in [
+            json!({"limit": 123}),
+            json!({"hashes":"abc", "limit": -1}),
+            json!({"hashes":"abc", "limit": "100"}),
+            json!({"hashes":"abc", "limit": 100, "typo": true}),
+        ] {
+            let error = service
+                .execute_operation_spec(&config, &spec, &json!({"body":body}))
+                .await
+                .unwrap_err();
+            assert!(error.to_string().contains("schema validation"), "{error}");
+            assert!(requests.try_recv().is_err());
+        }
+    }
+}
+
+#[tokio::test]
 async fn required_query_header_cookie_and_style_explode_are_recorded() {
     let (service, mut requests) = recording_service().await;
     let config = service.service("sonarr").unwrap().clone();

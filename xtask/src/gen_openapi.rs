@@ -1,4 +1,4 @@
-//! `cargo xtask gen-openapi` generates lossless operation/type tables for the six
+//! `cargo xtask gen-openapi` generates lossless operation/type tables for the seven
 //! spec-backed services from the vendored documents under `specs/`.
 //!
 //! Generated files contain data only. Supported operations preserve parameter
@@ -27,6 +27,7 @@ const SPECS: &[(&str, &str)] = &[
     ("overseerr", "specs/overseerr.openapi.yml"),
     ("jellyfin", "specs/jellyfin.openapi.json"),
     ("plex", "specs/plex.openapi.yml"),
+    ("qbittorrent", "specs/qbittorrent.openapi.json"),
 ];
 
 #[derive(Debug)]

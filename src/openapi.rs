@@ -1,7 +1,7 @@
 //! Generated OpenAPI operation surface (runtime side).
 //!
-//! For the 6 spec-backed services (Sonarr, Radarr, Prowlarr, Overseerr, Jellyfin,
-//! Plex) the entire upstream API — every operation and every component type — is
+//! For the spec-backed services (Sonarr, Radarr, Prowlarr, Overseerr, Jellyfin,
+//! Plex, and qBittorrent) the supported upstream operations and component types are
 //! **generated from the vendored OpenAPI specs** under `specs/` by
 //! `cargo xtask gen-openapi`, not hand-written. This module holds the runtime
 //! shapes the generated tables fill in ([`OperationSpec`], [`TypeDef`]), the
@@ -10,8 +10,8 @@
 //!
 //! Discovery (`codemode.search`/`describe`) and the per-service callable namespace
 //! are driven entirely off these tables, so adding/refreshing a service is a
-//! regeneration step — there is no hand-rolled curated command or model for these
-//! kinds.
+//! regeneration step. qBittorrent uses a locally maintained, source-audited spec
+//! and also retains its curated convenience commands and response models.
 
 use serde_json::Value;
 
@@ -181,9 +181,8 @@ pub struct TypeDef {
     pub ts: &'static str,
 }
 
-/// Whether a kind's API is generated from an OpenAPI spec (vs the doc-based,
-/// hand-modeled kinds). Drives whether the per-service callable surface comes from
-/// generated operations or the legacy curated commands.
+/// Whether a kind has generated operations. These augment any curated helpers
+/// already provided by the kind's capability.
 pub fn is_generated(kind: ServiceKind) -> bool {
     !operations_for_kind(kind).is_empty()
 }
@@ -197,6 +196,7 @@ pub fn operations_for_kind(kind: ServiceKind) -> &'static [OperationSpec] {
         ServiceKind::Overseerr => generated::overseerr::OPERATIONS,
         ServiceKind::Jellyfin => generated::jellyfin::OPERATIONS,
         ServiceKind::Plex => generated::plex::OPERATIONS,
+        ServiceKind::Qbittorrent => generated::qbittorrent::OPERATIONS,
         _ => &[],
     }
 }
@@ -211,6 +211,7 @@ pub fn omitted_operations_for_kind(kind: ServiceKind) -> &'static [OmittedOperat
         ServiceKind::Overseerr => generated::overseerr::OMITTED_OPERATIONS,
         ServiceKind::Jellyfin => generated::jellyfin::OMITTED_OPERATIONS,
         ServiceKind::Plex => generated::plex::OMITTED_OPERATIONS,
+        ServiceKind::Qbittorrent => generated::qbittorrent::OMITTED_OPERATIONS,
         _ => &[],
     }
 }
@@ -224,6 +225,7 @@ pub fn types_for_kind(kind: ServiceKind) -> &'static [TypeDef] {
         ServiceKind::Overseerr => generated::overseerr::TYPES,
         ServiceKind::Jellyfin => generated::jellyfin::TYPES,
         ServiceKind::Plex => generated::plex::TYPES,
+        ServiceKind::Qbittorrent => generated::qbittorrent::TYPES,
         _ => &[],
     }
 }

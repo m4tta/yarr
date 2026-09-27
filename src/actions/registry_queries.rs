@@ -75,7 +75,7 @@ pub fn allowed_kind_names_for_action(action: &str) -> Vec<&'static str> {
     curated_command(action).map_or_else(Vec::new, |command| {
         ServiceKind::ALL
             .iter()
-            .filter(|kind| kind.capability() == command.capability)
+            .filter(|kind| curated_command_supports_kind(command, **kind))
             .map(|kind| kind.as_str())
             .collect()
     })
@@ -119,7 +119,8 @@ pub fn capability_digest() -> Option<String> {
 
 pub fn action_allowed_for_kind(action: &str, kind: ServiceKind) -> bool {
     is_infra_action(action)
-        || curated_command(action).is_some_and(|command| command.capability == kind.capability())
+        || curated_command(action)
+            .is_some_and(|command| curated_command_supports_kind(command, kind))
 }
 
 pub fn valid_actions_for_kind(kind: ServiceKind) -> Vec<&'static str> {
@@ -127,10 +128,15 @@ pub fn valid_actions_for_kind(kind: ServiceKind) -> Vec<&'static str> {
     names.extend(
         curated_commands()
             .iter()
-            .filter(|command| command.capability == kind.capability())
+            .filter(|command| curated_command_supports_kind(command, kind))
             .map(|command| command.name),
     );
     names
+}
+
+fn curated_command_supports_kind(command: &super::CommandDescriptor, kind: ServiceKind) -> bool {
+    command.capability == kind.capability()
+        && crate::actions::commands::download::command_supports_kind(command.name, kind)
 }
 
 #[cfg(test)]

@@ -24,3 +24,16 @@ fn curated_parameter_queries_are_consistent() {
         );
     }
 }
+
+#[test]
+fn qbittorrent_controls_are_not_advertised_or_allowed_for_sabnzbd() {
+    let qbit = valid_actions_for_kind(ServiceKind::Qbittorrent);
+    let sab = valid_actions_for_kind(ServiceKind::Sabnzbd);
+    for action in crate::actions::commands::download::QBITTORRENT_ONLY_COMMANDS {
+        assert!(qbit.contains(action), "qBittorrent missing {action}");
+        assert!(!sab.contains(action), "SABnzbd advertised {action}");
+        assert!(action_allowed_for_kind(action, ServiceKind::Qbittorrent));
+        assert!(!action_allowed_for_kind(action, ServiceKind::Sabnzbd));
+        assert_eq!(allowed_kind_names_for_action(action), vec!["qbittorrent"]);
+    }
+}

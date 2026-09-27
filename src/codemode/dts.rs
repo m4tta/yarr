@@ -131,11 +131,18 @@ pub fn type_catalog_json_for(services: &[(String, crate::config::ServiceKind)]) 
                     dts: t.ts.to_string(),
                 });
             }
-        } else {
+        }
+        {
             // Doc-based kind: reuse the schemars-derived entries for this kind,
             // re-qualified by the configured service name.
             let kind_str = kind.as_str();
             for entry in model_entries.iter().filter(|e| e.service == kind_str) {
+                if crate::openapi::types_for_kind(*kind)
+                    .iter()
+                    .any(|generated| generated.name == entry.type_name)
+                {
+                    continue;
+                }
                 out.push(TypeEntry {
                     name: format!("{name}.{}", entry.type_name),
                     service: entry.service,

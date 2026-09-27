@@ -47,44 +47,61 @@ struct CapturedRequest {
 /// request back over a channel. Lets us assert the REAL method puts the right path
 /// and form body on the wire.
 fn stub_empty_200() -> (String, std::sync::mpsc::Receiver<CapturedRequest>) {
+    stub_responses(&[200])
+}
+
+fn stub_responses(statuses: &[u16]) -> (String, std::sync::mpsc::Receiver<CapturedRequest>) {
     use std::io::{BufRead, BufReader, Read, Write};
     use std::net::TcpListener;
     use std::sync::mpsc;
 
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind test server");
     let addr = listener.local_addr().unwrap();
+    let statuses = statuses.to_vec();
     let (tx, rx) = mpsc::channel::<CapturedRequest>();
     std::thread::spawn(move || {
-        let (mut stream, _) = listener.accept().expect("accept");
-        let mut reader = BufReader::new(stream.try_clone().unwrap());
-        let mut request_line = String::new();
-        reader.read_line(&mut request_line).unwrap();
-        let mut content_length = 0_usize;
-        loop {
-            let mut line = String::new();
-            if reader.read_line(&mut line).unwrap() == 0 {
-                break;
+        for status in statuses {
+            let (mut stream, _) = listener.accept().expect("accept");
+            let mut reader = BufReader::new(stream.try_clone().unwrap());
+            let mut request_line = String::new();
+            reader.read_line(&mut request_line).unwrap();
+            let mut content_length = 0_usize;
+            loop {
+                let mut line = String::new();
+                if reader.read_line(&mut line).unwrap() == 0 {
+                    break;
+                }
+                if line == "\r\n" || line == "\n" {
+                    break;
+                }
+                if let Some(rest) = line.to_ascii_lowercase().strip_prefix("content-length:") {
+                    content_length = rest.trim().parse().unwrap_or(0);
+                }
             }
-            if line == "\r\n" || line == "\n" {
-                break;
+            let mut body = vec![0_u8; content_length];
+            if content_length > 0 {
+                reader.read_exact(&mut body).unwrap();
             }
-            if let Some(rest) = line.to_ascii_lowercase().strip_prefix("content-length:") {
-                content_length = rest.trim().parse().unwrap_or(0);
-            }
+            tx.send(CapturedRequest {
+                request_line: request_line.trim_end().to_string(),
+                body: String::from_utf8_lossy(&body).to_string(),
+            })
+            .unwrap();
+            write!(
+                stream,
+                "HTTP/1.1 {status} Test\r\nContent-Length: 0\r\n\r\n"
+            )
+            .unwrap();
+            let _ = stream.flush();
         }
-        let mut body = vec![0_u8; content_length];
-        if content_length > 0 {
-            reader.read_exact(&mut body).unwrap();
-        }
-        tx.send(CapturedRequest {
-            request_line: request_line.trim_end().to_string(),
-            body: String::from_utf8_lossy(&body).to_string(),
-        })
-        .unwrap();
-        write!(stream, "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n").unwrap();
-        let _ = stream.flush();
     });
     (format!("http://{addr}"), rx)
+}
+
+fn form_fields(body: &str) -> std::collections::BTreeMap<String, String> {
+    url::form_urlencoded::parse(body.as_bytes())
+        .into_owned()
+        .collect()
 }
 
 #[test]
@@ -188,8 +205,13 @@ fn queue_slim_keeps_torrent_fields() {
         "state": "downloading",
         "progress": 0.42,
         "dlspeed": 1048576,
+        "upspeed": 131072,
+        "eta": 600,
         "size": 734003200_i64,
         "category": "linux",
+        "tags": "iso,linux",
+        "dl_limit": 2097152,
+        "up_limit": 262144,
         "tracker": "drop me",
         "magnet_uri": "drop me too"
     }]);
@@ -200,6 +222,136 @@ fn queue_slim_keeps_torrent_fields() {
     assert_eq!(row["state"], "downloading");
     assert_eq!(row["progress"], 0.42);
     assert_eq!(row["category"], "linux");
+    assert_eq!(row["upspeed"], 131072);
+    assert_eq!(row["eta"], 600);
+    assert_eq!(row["tags"], "iso,linux");
+    assert_eq!(row["dl_limit"], 2097152);
+    assert_eq!(row["up_limit"], 262144);
     assert!(row.get("tracker").is_none(), "bulky fields dropped");
     assert!(row.get("magnet_uri").is_none());
+}
+
+#[tokio::test]
+async fn per_torrent_limit_targets_exactly_one_hash() {
+    let (base, rx) = stub_empty_200();
+    let svc = qbit_service(qbit_config_no_auth(&base));
+    let out = svc
+        .download_set_limits("qbittorrent", None, Some("abc123"), Some(4096), None)
+        .await
+        .unwrap();
+    let req = rx.recv().unwrap();
+    assert!(
+        req.request_line
+            .starts_with("POST /api/v2/torrents/setDownloadLimit ")
+    );
+    let fields = form_fields(&req.body);
+    assert_eq!(fields.get("hashes").map(String::as_str), Some("abc123"));
+    assert_eq!(fields.get("limit").map(String::as_str), Some("4096"));
+    assert_eq!(out["target"], "abc123");
+}
+
+#[tokio::test]
+async fn category_and_tag_forms_are_encoded_without_expanding_targets() {
+    let (base, rx) = stub_empty_200();
+    let svc = qbit_service(qbit_config_no_auth(&base));
+    svc.download_create_category(
+        "qbittorrent",
+        "TV/Anime & Kids",
+        Some("/downloads/TV & Anime"),
+    )
+    .await
+    .unwrap();
+    let fields = form_fields(&rx.recv().unwrap().body);
+    assert_eq!(
+        fields.get("category").map(String::as_str),
+        Some("TV/Anime & Kids")
+    );
+    assert_eq!(
+        fields.get("savePath").map(String::as_str),
+        Some("/downloads/TV & Anime")
+    );
+
+    let (base, rx) = stub_empty_200();
+    let svc = qbit_service(qbit_config_no_auth(&base));
+    svc.download_add_tags(
+        "qbittorrent",
+        None,
+        Some("abc123"),
+        &["needs review".into(), "4K/HDR".into()],
+    )
+    .await
+    .unwrap();
+    let fields = form_fields(&rx.recv().unwrap().body);
+    assert_eq!(fields.get("hashes").map(String::as_str), Some("abc123"));
+    assert_eq!(
+        fields.get("tags").map(String::as_str),
+        Some("needs review,4K/HDR")
+    );
+}
+
+#[tokio::test]
+async fn invalid_limits_and_delimiters_fail_before_any_request() {
+    use std::io::ErrorKind;
+    use std::net::TcpListener;
+
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    listener.set_nonblocking(true).unwrap();
+    let base = format!("http://{}", listener.local_addr().unwrap());
+    let svc = qbit_service(qbit_config_no_auth(&base));
+
+    assert!(
+        svc.download_set_limits("qbittorrent", None, None, Some(-1), None)
+            .await
+            .unwrap_err()
+            .to_string()
+            .contains(">= 0")
+    );
+    assert!(
+        svc.download_set_limits("qbittorrent", Some("abc"), Some("def"), Some(1), None,)
+            .await
+            .unwrap_err()
+            .to_string()
+            .contains("exactly one")
+    );
+    assert!(
+        svc.download_remove_category("qbittorrent", "one\ntwo")
+            .await
+            .unwrap_err()
+            .to_string()
+            .contains("exactly one")
+    );
+    assert!(
+        svc.download_create_tags("qbittorrent", &["one,two".into()])
+            .await
+            .unwrap_err()
+            .to_string()
+            .contains("comma")
+    );
+
+    tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    assert!(matches!(listener.accept(), Err(error) if error.kind() == ErrorKind::WouldBlock));
+}
+
+#[tokio::test]
+async fn second_limit_failure_reports_that_the_first_was_applied() {
+    let (base, rx) = stub_responses(&[200, 500]);
+    let svc = qbit_service(qbit_config_no_auth(&base));
+    let error = svc
+        .download_set_limits("qbittorrent", None, None, Some(1000), Some(2000))
+        .await
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("download limit was applied"), "got: {error}");
+    assert!(
+        rx.recv()
+            .unwrap()
+            .request_line
+            .contains("/transfer/setDownloadLimit")
+    );
+    assert!(
+        rx.recv()
+            .unwrap()
+            .request_line
+            .contains("/transfer/setUploadLimit")
+    );
 }

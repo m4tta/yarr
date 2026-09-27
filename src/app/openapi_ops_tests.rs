@@ -140,6 +140,56 @@ async fn execute_operation_rejects_unknown_op() {
 mod recording;
 
 #[tokio::test]
+async fn qbittorrent_generated_calls_validate_selectors_and_form_types_before_login() {
+    use crate::config::{ServiceConfig, ServiceKind, YarrConfig};
+    let config = YarrConfig {
+        services: vec![ServiceConfig {
+            name: "qbit_movies".into(),
+            kind: ServiceKind::Qbittorrent,
+            base_url: "http://127.0.0.1:1".into(),
+            ..ServiceConfig::default()
+        }],
+    };
+    let service =
+        crate::app::YarrService::new(crate::yarr::YarrClient::new(&config).unwrap(), config);
+    // No credentials or listening server: a validation error demonstrates that
+    // neither authentication nor the operation's HTTP request was attempted.
+    for (operation, args, expected) in [
+        (
+            "get_torrent_files",
+            json!({}),
+            "requires query parameter `hash`",
+        ),
+        (
+            "post_torrents_delete",
+            json!({"body":{"hashes":"abc"}}),
+            "schema validation",
+        ),
+        (
+            "post_torrents_delete",
+            json!({"body":{"hashes":"abc","deleteFiles":"false"}}),
+            "schema validation",
+        ),
+        (
+            "post_transfer_set_download_limit",
+            json!({"body":{"limit":"123"}}),
+            "schema validation",
+        ),
+        (
+            "post_app_set_preferences",
+            json!({"body":{"json":{"dht":false}}}),
+            "schema validation",
+        ),
+    ] {
+        let error = service
+            .execute_operation("qbit_movies", operation, &args)
+            .await
+            .unwrap_err();
+        assert!(error.to_string().contains(expected), "{operation}: {error}");
+    }
+}
+
+#[tokio::test]
 async fn production_runtime_rejects_repo_relative_multipart_fixture() {
     let service = loopback_state().service;
     let error = service

@@ -7,5 +7,6 @@ pub mod jellyfin;
 pub mod overseerr;
 pub mod plex;
 pub mod prowlarr;
+pub mod qbittorrent;
 pub mod radarr;
 pub mod sonarr;

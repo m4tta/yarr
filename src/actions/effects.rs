@@ -122,11 +122,36 @@ fn configured_kind(service: &YarrService, name: &str) -> Result<ServiceKind> {
         .ok_or_else(|| anyhow!("unknown yarr service: {name}"))
 }
 
-fn classify_operation(
+pub(crate) fn classify_operation(
     kind: ServiceKind,
     spec: &OperationSpec,
     body: Option<&Value>,
 ) -> OperationEffect {
+    if kind == ServiceKind::Qbittorrent && spec.method == HttpMethod::Post {
+        if matches!(
+            spec.path,
+            "/api/v2/torrents/add" | "/api/v2/torrents/setShareLimits"
+        ) && matches!(
+            body.and_then(|body| body.get("shareLimitAction"))
+                .and_then(Value::as_str),
+            Some("Remove" | "RemoveWithContent")
+        ) {
+            return OperationEffect::Destructive;
+        }
+        match spec.path {
+            "/api/v2/torrents/delete"
+            | "/api/v2/rss/removeItem"
+            | "/api/v2/rss/removeRule"
+            | "/api/v2/search/uninstallPlugin" => return OperationEffect::Destructive,
+            "/api/v2/app/shutdown"
+            | "/api/v2/app/deleteAPIKey"
+            | "/api/v2/app/rotateAPIKey"
+            | "/api/v2/app/setPreferences"
+            | "/api/v2/search/installPlugin"
+            | "/api/v2/search/updatePlugins" => return OperationEffect::Disruptive,
+            _ => {}
+        }
+    }
     if kind == ServiceKind::Plex {
         match (spec.method, spec.path) {
             (HttpMethod::Put, "/library/sections/{sectionId}/emptyTrash") => {

@@ -1,0 +1,1011 @@
+{
+  "schemaVersion": 1,
+  "service": "qbittorrent",
+  "apiVersion": "2.15.1",
+  "upstream": {
+    "repository": "https://github.com/qbittorrent/qBittorrent",
+    "ref": "release-5.2.3",
+    "commit": "0b63c3d17373f6132ea211c9dcd4241284ccdfaf",
+    "apiBase": "/api/v2",
+    "wiki": {
+      "repository": "https://github.com/qbittorrent/wiki",
+      "commit": "74b1c38558c3ed831c1fd895946882753835cbc7",
+      "path": "WebUI-API-(qBittorrent-5.0).md",
+      "sha256": "b9088dc7805c4ecb43901f18079d78ade78336d3647954f410a1b429d4902a62"
+    }
+  },
+  "inventory": [
+    {
+      "path": "/app/buildInfo",
+      "method": "get",
+      "operationId": "get_app_build_info",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "buildInfo",
+      "status": "specified"
+    },
+    {
+      "path": "/app/cookies",
+      "method": "get",
+      "operationId": "get_app_cookies",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "cookies",
+      "status": "specified"
+    },
+    {
+      "path": "/app/defaultSavePath",
+      "method": "get",
+      "operationId": "get_app_default_save_path",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "defaultSavePath",
+      "status": "specified"
+    },
+    {
+      "path": "/app/deleteAPIKey",
+      "method": "post",
+      "operationId": "post_app_delete_a_p_i_key",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "deleteAPIKey",
+      "status": "specified"
+    },
+    {
+      "path": "/app/getDirectoryContent",
+      "method": "get",
+      "operationId": "get_app_get_directory_content",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "getDirectoryContent",
+      "status": "specified"
+    },
+    {
+      "path": "/app/networkInterfaceAddressList",
+      "method": "get",
+      "operationId": "get_app_network_interface_address_list",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "networkInterfaceAddressList",
+      "status": "specified"
+    },
+    {
+      "path": "/app/networkInterfaceList",
+      "method": "get",
+      "operationId": "get_app_network_interface_list",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "networkInterfaceList",
+      "status": "specified"
+    },
+    {
+      "path": "/app/preferences",
+      "method": "get",
+      "operationId": "get_app_preferences",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "preferences",
+      "status": "specified"
+    },
+    {
+      "path": "/app/processInfo",
+      "method": "get",
+      "operationId": "get_app_process_info",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "processInfo",
+      "status": "specified"
+    },
+    {
+      "path": "/app/rotateAPIKey",
+      "method": "post",
+      "operationId": "post_app_rotate_a_p_i_key",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "rotateAPIKey",
+      "status": "specified"
+    },
+    {
+      "path": "/app/sendTestEmail",
+      "method": "post",
+      "operationId": "post_app_send_test_email",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "sendTestEmail",
+      "status": "specified"
+    },
+    {
+      "path": "/app/setCookies",
+      "method": "post",
+      "operationId": "post_app_set_cookies",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "setCookies",
+      "status": "specified"
+    },
+    {
+      "path": "/app/setPreferences",
+      "method": "post",
+      "operationId": "post_app_set_preferences",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "setPreferences",
+      "status": "specified"
+    },
+    {
+      "path": "/app/shutdown",
+      "method": "post",
+      "operationId": "post_app_shutdown",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "shutdown",
+      "status": "specified"
+    },
+    {
+      "path": "/app/version",
+      "method": "get",
+      "operationId": "get_app_version",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "version",
+      "status": "specified"
+    },
+    {
+      "path": "/app/webapiVersion",
+      "method": "get",
+      "operationId": "get_webapi_version",
+      "source": "src/webui/api/appcontroller.h",
+      "action": "webapiVersion",
+      "status": "specified"
+    },
+    {
+      "path": "/clientdata/load",
+      "method": "get",
+      "operationId": "get_client_data_load",
+      "source": "src/webui/api/clientdatacontroller.h",
+      "action": "load",
+      "status": "specified"
+    },
+    {
+      "path": "/clientdata/store",
+      "method": "post",
+      "operationId": "post_client_data_store",
+      "source": "src/webui/api/clientdatacontroller.h",
+      "action": "store",
+      "status": "specified"
+    },
+    {
+      "path": "/log/main",
+      "method": "get",
+      "operationId": "get_log_main",
+      "source": "src/webui/api/logcontroller.h",
+      "action": "main",
+      "status": "specified"
+    },
+    {
+      "path": "/log/peers",
+      "method": "get",
+      "operationId": "get_log_peers",
+      "source": "src/webui/api/logcontroller.h",
+      "action": "peers",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/addFeed",
+      "method": "post",
+      "operationId": "post_rss_add_feed",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "addFeed",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/addFolder",
+      "method": "post",
+      "operationId": "post_rss_add_folder",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "addFolder",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/items",
+      "method": "get",
+      "operationId": "get_rss_items",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "items",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/markAsRead",
+      "method": "post",
+      "operationId": "post_rss_mark_as_read",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "markAsRead",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/matchingArticles",
+      "method": "get",
+      "operationId": "get_rss_matching_articles",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "matchingArticles",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/moveItem",
+      "method": "post",
+      "operationId": "post_rss_move_item",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "moveItem",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/refreshItem",
+      "method": "post",
+      "operationId": "post_rss_refresh_item",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "refreshItem",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/removeItem",
+      "method": "post",
+      "operationId": "post_rss_remove_item",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "removeItem",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/removeRule",
+      "method": "post",
+      "operationId": "post_rss_remove_rule",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "removeRule",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/renameRule",
+      "method": "post",
+      "operationId": "post_rss_rename_rule",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "renameRule",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/rules",
+      "method": "get",
+      "operationId": "get_rss_rules",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "rules",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/setFeedRefreshInterval",
+      "method": "post",
+      "operationId": "post_rss_set_feed_refresh_interval",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "setFeedRefreshInterval",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/setFeedURL",
+      "method": "post",
+      "operationId": "post_rss_set_feed_u_r_l",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "setFeedURL",
+      "status": "specified"
+    },
+    {
+      "path": "/rss/setRule",
+      "method": "post",
+      "operationId": "post_rss_set_rule",
+      "source": "src/webui/api/rsscontroller.h",
+      "action": "setRule",
+      "status": "specified"
+    },
+    {
+      "path": "/search/delete",
+      "method": "post",
+      "operationId": "post_search_delete",
+      "source": "src/webui/api/searchcontroller.h",
+      "action": "delete",
+      "status": "specified"
+    },
+    {
+      "path": "/search/downloadTorrent",
+      "method": "post",
+      "operationId": "post_search_download_torrent",
+      "source": "src/webui/api/searchcontroller.h",
+      "action": "downloadTorrent",
+      "status": "specified"
+    },
+    {
+      "path": "/search/enablePlugin",
+      "method": "post",
+      "operationId": "post_search_enable_plugin",
+      "source": "src/webui/api/searchcontroller.h",
+      "action": "enablePlugin",
+      "status": "specified"
+    },
+    {
+      "path": "/search/installPlugin",
+      "method": "post",
+      "operationId": "post_search_install_plugin",
+      "source": "src/webui/api/searchcontroller.h",
+      "action": "installPlugin",
+      "status": "specified"
+    },
+    {
+      "path": "/search/plugins",
+      "method": "get",
+      "operationId": "get_search_plugins",
+      "source": "src/webui/api/searchcontroller.h",
+      "action": "plugins",
+      "status": "specified"
+    },
+    {
+      "path": "/search/results",
+      "method": "get",
+      "operationId": "get_search_results",
+      "source": "src/webui/api/searchcontroller.h",
+      "action": "results",
+      "status": "specified"
+    },
+    {
+      "path": "/search/start",
+      "method": "post",
+      "operationId": "post_search_start",
+      "source": "src/webui/api/searchcontroller.h",
+      "action": "start",
+      "status": "specified"
+    },
+    {
+      "path": "/search/status",
+      "method": "get",
+      "operationId": "get_search_status",
+      "source": "src/webui/api/searchcontroller.h",
+      "action": "status",
+      "status": "specified"
+    },
+    {
+      "path": "/search/stop",
+      "method": "post",
+      "operationId": "post_search_stop",
+      "source": "src/webui/api/searchcontroller.h",
+      "action": "stop",
+      "status": "specified"
+    },
+    {
+      "path": "/search/uninstallPlugin",
+      "method": "post",
+      "operationId": "post_search_uninstall_plugin",
+      "source": "src/webui/api/searchcontroller.h",
+      "action": "uninstallPlugin",
+      "status": "specified"
+    },
+    {
+      "path": "/search/updatePlugins",
+      "method": "post",
+      "operationId": "post_search_update_plugins",
+      "source": "src/webui/api/searchcontroller.h",
+      "action": "updatePlugins",
+      "status": "specified"
+    },
+    {
+      "path": "/sync/maindata",
+      "method": "get",
+      "operationId": "get_sync_maindata",
+      "source": "src/webui/api/synccontroller.h",
+      "action": "maindata",
+      "status": "specified"
+    },
+    {
+      "path": "/sync/torrentPeers",
+      "method": "get",
+      "operationId": "get_sync_torrent_peers",
+      "source": "src/webui/api/synccontroller.h",
+      "action": "torrentPeers",
+      "status": "specified"
+    },
+    {
+      "path": "/torrentcreator/addTask",
+      "method": "post",
+      "operationId": "post_torrent_creator_add_task",
+      "source": "src/webui/api/torrentcreatorcontroller.h",
+      "action": "addTask",
+      "status": "specified"
+    },
+    {
+      "path": "/torrentcreator/deleteTask",
+      "method": "post",
+      "operationId": "post_torrent_creator_delete_task",
+      "source": "src/webui/api/torrentcreatorcontroller.h",
+      "action": "deleteTask",
+      "status": "specified"
+    },
+    {
+      "path": "/torrentcreator/status",
+      "method": "get",
+      "operationId": "get_torrent_creator_status",
+      "source": "src/webui/api/torrentcreatorcontroller.h",
+      "action": "status",
+      "status": "specified"
+    },
+    {
+      "path": "/torrentcreator/torrentFile",
+      "method": "get",
+      "operationId": "get_torrent_creator_torrent_file",
+      "source": "src/webui/api/torrentcreatorcontroller.h",
+      "action": "torrentFile",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/SSLParameters",
+      "method": "get",
+      "operationId": "get_torrent_ssl_parameters",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "SSLParameters",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/add",
+      "method": "post",
+      "operationId": "post_torrents_add",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "add",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/addPeers",
+      "method": "post",
+      "operationId": "post_torrents_add_peers",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "addPeers",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/addTags",
+      "method": "post",
+      "operationId": "post_torrents_add_tags",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "addTags",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/addTrackers",
+      "method": "post",
+      "operationId": "post_torrents_add_trackers",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "addTrackers",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/addWebSeeds",
+      "method": "post",
+      "operationId": "post_torrents_add_web_seeds",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "addWebSeeds",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/bottomPrio",
+      "method": "post",
+      "operationId": "post_torrents_bottom_prio",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "bottomPrio",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/categories",
+      "method": "get",
+      "operationId": "get_torrents_categories",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "categories",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/count",
+      "method": "get",
+      "operationId": "get_torrent_count",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "count",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/createCategory",
+      "method": "post",
+      "operationId": "post_torrents_create_category",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "createCategory",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/createTags",
+      "method": "post",
+      "operationId": "post_torrents_create_tags",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "createTags",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/decreasePrio",
+      "method": "post",
+      "operationId": "post_torrents_decrease_prio",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "decreasePrio",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/delete",
+      "method": "post",
+      "operationId": "post_torrents_delete",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "delete",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/deleteTags",
+      "method": "post",
+      "operationId": "post_torrents_delete_tags",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "deleteTags",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/downloadLimit",
+      "method": "get",
+      "operationId": "get_torrents_download_limit",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "downloadLimit",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/editCategory",
+      "method": "post",
+      "operationId": "post_torrents_edit_category",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "editCategory",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/editTracker",
+      "method": "post",
+      "operationId": "post_torrents_edit_tracker",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "editTracker",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/editWebSeed",
+      "method": "post",
+      "operationId": "post_torrents_edit_web_seed",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "editWebSeed",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/export",
+      "method": "get",
+      "operationId": "get_torrent_export",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "export",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/fetchMetadata",
+      "method": "post",
+      "operationId": "post_torrents_fetch_metadata",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "fetchMetadata",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/filePrio",
+      "method": "post",
+      "operationId": "post_torrents_file_prio",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "filePrio",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/files",
+      "method": "get",
+      "operationId": "get_torrent_files",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "files",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/increasePrio",
+      "method": "post",
+      "operationId": "post_torrents_increase_prio",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "increasePrio",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/info",
+      "method": "get",
+      "operationId": "get_torrents",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "info",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/parseMetadata",
+      "method": "post",
+      "operationId": "post_torrents_parse_metadata",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "parseMetadata",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/pieceAvailability",
+      "method": "get",
+      "operationId": "get_torrent_piece_availability",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "pieceAvailability",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/pieceHashes",
+      "method": "get",
+      "operationId": "get_torrent_piece_hashes",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "pieceHashes",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/pieceStates",
+      "method": "get",
+      "operationId": "get_torrent_piece_states",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "pieceStates",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/properties",
+      "method": "get",
+      "operationId": "get_torrent_properties",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "properties",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/reannounce",
+      "method": "post",
+      "operationId": "post_torrents_reannounce",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "reannounce",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/recheck",
+      "method": "post",
+      "operationId": "post_torrents_recheck",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "recheck",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/removeCategories",
+      "method": "post",
+      "operationId": "post_torrents_remove_categories",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "removeCategories",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/removeTags",
+      "method": "post",
+      "operationId": "post_torrents_remove_tags",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "removeTags",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/removeTrackers",
+      "method": "post",
+      "operationId": "post_torrents_remove_trackers",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "removeTrackers",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/removeWebSeeds",
+      "method": "post",
+      "operationId": "post_torrents_remove_web_seeds",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "removeWebSeeds",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/rename",
+      "method": "post",
+      "operationId": "post_torrents_rename",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "rename",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/renameFile",
+      "method": "post",
+      "operationId": "post_torrents_rename_file",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "renameFile",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/renameFolder",
+      "method": "post",
+      "operationId": "post_torrents_rename_folder",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "renameFolder",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/saveMetadata",
+      "method": "get",
+      "operationId": "get_torrent_metadata_file",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "saveMetadata",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/setAutoManagement",
+      "method": "post",
+      "operationId": "post_torrents_set_auto_management",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "setAutoManagement",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/setCategory",
+      "method": "post",
+      "operationId": "post_torrents_set_category",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "setCategory",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/setComment",
+      "method": "post",
+      "operationId": "post_torrents_set_comment",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "setComment",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/setDownloadLimit",
+      "method": "post",
+      "operationId": "post_torrents_set_download_limit",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "setDownloadLimit",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/setDownloadPath",
+      "method": "post",
+      "operationId": "post_torrents_set_download_path",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "setDownloadPath",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/setForceStart",
+      "method": "post",
+      "operationId": "post_torrents_set_force_start",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "setForceStart",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/setLocation",
+      "method": "post",
+      "operationId": "post_torrents_set_location",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "setLocation",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/setSSLParameters",
+      "method": "post",
+      "operationId": "post_torrents_set_s_s_l_parameters",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "setSSLParameters",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/setSavePath",
+      "method": "post",
+      "operationId": "post_torrents_set_save_path",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "setSavePath",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/setShareLimits",
+      "method": "post",
+      "operationId": "post_torrents_set_share_limits",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "setShareLimits",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/setSuperSeeding",
+      "method": "post",
+      "operationId": "post_torrents_set_super_seeding",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "setSuperSeeding",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/setTags",
+      "method": "post",
+      "operationId": "post_torrents_set_tags",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "setTags",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/setUploadLimit",
+      "method": "post",
+      "operationId": "post_torrents_set_upload_limit",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "setUploadLimit",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/start",
+      "method": "post",
+      "operationId": "post_torrents_start",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "start",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/stop",
+      "method": "post",
+      "operationId": "post_torrents_stop",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "stop",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/tags",
+      "method": "get",
+      "operationId": "get_torrents_tags",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "tags",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/toggleFirstLastPiecePrio",
+      "method": "post",
+      "operationId": "post_torrents_toggle_first_last_piece_prio",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "toggleFirstLastPiecePrio",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/toggleSequentialDownload",
+      "method": "post",
+      "operationId": "post_torrents_toggle_sequential_download",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "toggleSequentialDownload",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/topPrio",
+      "method": "post",
+      "operationId": "post_torrents_top_prio",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "topPrio",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/trackers",
+      "method": "get",
+      "operationId": "get_torrent_trackers",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "trackers",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/uploadLimit",
+      "method": "get",
+      "operationId": "get_torrents_upload_limit",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "uploadLimit",
+      "status": "specified"
+    },
+    {
+      "path": "/torrents/webseeds",
+      "method": "get",
+      "operationId": "get_torrent_webseeds",
+      "source": "src/webui/api/torrentscontroller.h",
+      "action": "webseeds",
+      "status": "specified"
+    },
+    {
+      "path": "/transfer/banPeers",
+      "method": "post",
+      "operationId": "post_transfer_ban_peers",
+      "source": "src/webui/api/transfercontroller.h",
+      "action": "banPeers",
+      "status": "specified"
+    },
+    {
+      "path": "/transfer/downloadLimit",
+      "method": "get",
+      "operationId": "get_transfer_download_limit",
+      "source": "src/webui/api/transfercontroller.h",
+      "action": "downloadLimit",
+      "status": "specified"
+    },
+    {
+      "path": "/transfer/info",
+      "method": "get",
+      "operationId": "get_transfer_info",
+      "source": "src/webui/api/transfercontroller.h",
+      "action": "info",
+      "status": "specified"
+    },
+    {
+      "path": "/transfer/setDownloadLimit",
+      "method": "post",
+      "operationId": "post_transfer_set_download_limit",
+      "source": "src/webui/api/transfercontroller.h",
+      "action": "setDownloadLimit",
+      "status": "specified"
+    },
+    {
+      "path": "/transfer/setSpeedLimitsMode",
+      "method": "post",
+      "operationId": "post_transfer_set_speed_limits_mode",
+      "source": "src/webui/api/transfercontroller.h",
+      "action": "setSpeedLimitsMode",
+      "status": "specified"
+    },
+    {
+      "path": "/transfer/setUploadLimit",
+      "method": "post",
+      "operationId": "post_transfer_set_upload_limit",
+      "source": "src/webui/api/transfercontroller.h",
+      "action": "setUploadLimit",
+      "status": "specified"
+    },
+    {
+      "path": "/transfer/speedLimitsMode",
+      "method": "get",
+      "operationId": "get_transfer_speed_limits_mode",
+      "source": "src/webui/api/transfercontroller.h",
+      "action": "speedLimitsMode",
+      "status": "specified"
+    },
+    {
+      "path": "/transfer/toggleSpeedLimitsMode",
+      "method": "post",
+      "operationId": "post_transfer_toggle_speed_limits_mode",
+      "source": "src/webui/api/transfercontroller.h",
+      "action": "toggleSpeedLimitsMode",
+      "status": "specified"
+    },
+    {
+      "path": "/transfer/uploadLimit",
+      "method": "get",
+      "operationId": "get_transfer_upload_limit",
+      "source": "src/webui/api/transfercontroller.h",
+      "action": "uploadLimit",
+      "status": "specified"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "/auth/login",
+      "method": "post",
+      "source": "src/webui/api/authcontroller.h",
+      "action": "login",
+      "status": "excluded",
+      "reason": "Yarr transport owns qBittorrent authentication and session establishment; exposing credentials as an operation would duplicate and bypass transport auth."
+    },
+    {
+      "path": "/auth/logout",
+      "method": "post",
+      "source": "src/webui/api/authcontroller.h",
+      "action": "logout",
+      "status": "excluded",
+      "reason": "Yarr transport owns the authenticated qBittorrent session lifecycle; callers must not invalidate the pooled transport session."
+    }
+  ],
+  "nonApiExclusions": [
+    {
+      "surface": "src/webui/www/**",
+      "reason": "Browser HTML, JavaScript, static resources, and alternate WebUI assets are UI implementation, not /api/v2 controller routes."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+name: yarr-qbit-lab
+
+services:
+  qbittorrent:
+    image: ghcr.io/linuxserver/qbittorrent:version-5.2.3_v2.0.15@sha256:0ec64d5c7b7ba07c9c28458c78306231ac7677efb9ce8198f3dcb2e27cb2d444
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
+      WEBUI_PORT: "8080"
+    ports:
+      - "127.0.0.1:18083:8080"
+    volumes:
+      - qbit-config:/config
+      - qbit-downloads:/downloads
+    networks:
+      - lab
+    mem_limit: 512m
+    cpus: 2
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--output", "/dev/null", "http://localhost:8080/"]
+      interval: 3s
+      timeout: 2s
+      retries: 40
+
+networks:
+  lab:
+    name: yarr-qbit-lab-network
+
+volumes:
+  qbit-config:
+  qbit-downloads:

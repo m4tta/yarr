@@ -45,16 +45,7 @@ impl YarrClient {
             match request.try_clone() {
                 Some(retry) => match self.finish(service, request, mode.clone()).await {
                     Err(err) if is_auth_failure(&err) => {
-                        let session = self.qbit_session(service)?;
-                        session.invalidate().await;
-                        let relogin = session.ensure(service).await;
-                        axum_prometheus::metrics::counter!(
-                            "yarr_qbittorrent_relogins_total",
-                            "service" => service.name.clone(),
-                            "outcome" => if relogin.is_ok() { "success" } else { "failed" }
-                        )
-                        .increment(1);
-                        relogin?;
+                        self.refresh_qbit_session(service).await?;
                         return self.finish(service, retry, mode).await;
                     }
                     result => return result,
@@ -69,7 +60,23 @@ impl YarrClient {
         self.finish(service, request, mode).await
     }
 
-    async fn finish(
+    /// Invalidate and refresh one configured qBittorrent identity after an
+    /// upstream authentication rejection. Multipart requests rebuild their
+    /// non-cloneable body and share this same single refresh path.
+    pub(super) async fn refresh_qbit_session(&self, service: &ServiceConfig) -> Result<()> {
+        let session = self.qbit_session(service)?;
+        session.invalidate().await;
+        let relogin = session.ensure(service).await;
+        axum_prometheus::metrics::counter!(
+            "yarr_qbittorrent_relogins_total",
+            "service" => service.name.clone(),
+            "outcome" => if relogin.is_ok() { "success" } else { "failed" }
+        )
+        .increment(1);
+        relogin
+    }
+
+    pub(super) async fn finish(
         &self,
         service: &ServiceConfig,
         request: reqwest::RequestBuilder,
@@ -299,7 +306,7 @@ fn binary_response(
     })
 }
 
-fn is_auth_failure(err: &anyhow::Error) -> bool {
+pub(super) fn is_auth_failure(err: &anyhow::Error) -> bool {
     matches!(
         err.downcast_ref::<UpstreamError>(),
         Some(UpstreamError::Http { status, .. })

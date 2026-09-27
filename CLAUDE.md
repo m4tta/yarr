@@ -2,7 +2,7 @@
 
 ## What this project is
 
-Rust MCP and CLI server for a media automation fleet. It wraps **11 service kinds**: Sonarr, Radarr, Prowlarr, Overseerr, Jellyfin, Plex (spec-backed, generated) plus SABnzbd, qBittorrent, Tautulli, Bazarr, Tracearr (doc-backed, curated).
+Rust MCP and CLI server for a media automation fleet. It wraps **11 service kinds**: Sonarr, Radarr, Prowlarr, Overseerr, Jellyfin, Plex, and qBittorrent (spec-backed, generated) plus SABnzbd, Tautulli, Bazarr, and Tracearr (doc-backed, curated). qBittorrent also retains curated download helpers.
 
 | Fact | Value |
 |------|-------|
@@ -13,7 +13,7 @@ Rust MCP and CLI server for a media automation fleet. It wraps **11 service kind
 | Service port | `40070` (`YARR_MCP_PORT`) |
 | npm launcher | `@dinglebear/yarr@<Cargo version>`, pinned — never `latest` |
 
-The MCP surface is a single `yarr` tool that runs Code Mode (the `codemode` action). The 6 spec-backed services (sonarr/radarr/prowlarr/overseerr/jellyfin/plex) are reached through **generated** per-service callables (from vendored OpenAPI specs); download/stats/subtitles/trace keep curated commands; every service also has `service_status` + the `api_get/post/put/delete` generic passthrough. Services are declared via `YARR_SERVICES` plus per-service env (see Environment variables).
+The MCP surface is a single `yarr` tool that runs Code Mode (the `codemode` action). The 7 spec-backed services (sonarr/radarr/prowlarr/overseerr/jellyfin/plex/qbittorrent) are reached through **generated** per-service callables (from vendored OpenAPI specs); download/stats/subtitles/trace keep curated commands; every service also has `service_status` + the `api_get/post/put/delete` generic passthrough. Services are declared via `YARR_SERVICES` plus per-service env (see Environment variables).
 
 ## Module map
 
@@ -39,7 +39,7 @@ The MCP surface is a single `yarr` tool that runs Code Mode (the `codemode` acti
 | File | Role |
 |------|------|
 | `src/app.rs` | `YarrService` — business-layer facade; `execute_service_action` shared dispatch entry |
-| `src/app/openapi_ops.rs` + `app/openapi_ops/` | Generated-operation executor: one `(service, op, args)` → upstream request for the 6 spec-backed kinds (sonarr/radarr/prowlarr/overseerr/jellyfin/plex). No per-op code — see `src/openapi*` |
+| `src/app/openapi_ops.rs` + `app/openapi_ops/` | Generated-operation executor: one `(service, op, args)` → upstream request for the 7 spec-backed kinds (sonarr/radarr/prowlarr/overseerr/jellyfin/plex/qbittorrent). No per-op code — see `src/openapi*` |
 | `src/app/download.rs` + `app/download/{sab,qbit}.rs` | DownloadClient — per-client implementations (SAB query API, qBittorrent v2 REST/cookie) |
 | `src/app/stats.rs` | Stats (tautulli) activity/history/users/libraries plus maintenance writes, all run immediately (`delete_image_cache` is destructive — elicited on MCP); `{response}` envelope unwrap |
 | `src/app/subtitles.rs` | Bazarr subtitle status, inventory, wanted, provider, and language reads |
@@ -54,9 +54,12 @@ generated. The four doc-backed capabilities keep curated commands: `download`
 
 **Generated OpenAPI surface (`src/openapi*` + `specs/`)**
 
-The 6 spec-backed services are generated from the vendored OpenAPI specs under
-`specs/` by `cargo xtask gen-openapi` — 1,352 supported operations + 808 component types
-total. Inside Code Mode they are per-service callables (`sonarr.get_series()`,
+The 7 spec-backed services are generated from OpenAPI specs under
+`specs/` by `cargo xtask gen-openapi`. qBittorrent uses a locally maintained
+contract audited against pinned upstream controller source with
+`python3 scripts/check-qbittorrent-openapi.py`; authentication routes are
+transport-managed. Current counts are in `docs/TOOLS_ACTIONS_ENDPOINTS.md`.
+Inside Code Mode they are per-service callables (`sonarr.get_series()`,
 `radarr.post_movie({body})`, …) dispatched through the `op` action; component types
 are surfaced via `codemode.describe`.
 
@@ -68,7 +71,7 @@ are surfaced via `codemode.describe`.
 
 **Code Mode (`src/codemode*` + `src/app/codemode.rs`)**
 
-Run a JS async arrow fn that calls yarr actions — port of lab's gateway Code Mode. The `codemode` action (the single MCP `yarr` tool) / `yarr codemode --code|--file` (CLI) take a `code` string; the script gets **per-service callables `<service>.<verb>(params)`** with the service baked in (generated OpenAPI operations for the 6 spec-backed kinds via the `op` action, curated commands for download/stats/subtitles/trace), a typed `api.<service>.get/post/put/delete(path, body)` client, `callTool(action, params)` escape hatch, `codemode.search`/`describe` discovery, `codemode.run(name, input)`/`codemode.snippets()`, and `writeArtifact(path, content, options?)`. Returns `{result, calls, logs, artifacts, artifactsRunId?}`. Engine is in-process QuickJS via `rquickjs` (no wasmtime/subprocess), with four concurrent runtimes, a 500 ms admission timeout, and a 30 s absolute deadline. It runs on a `spawn_blocking` thread; `callTool`/`writeArtifact`/the internal embed bridge are synchronous native fns that block on a channel round-trip to the async dispatcher, so JS `async`/`await` is driven by a microtask pump. Requires `yarr:write`. Every inner action is independently reauthorized; destructive inner calls require MCP elicitation and fail closed when the peer cannot elicit. Direct trusted CLI execution has no elicitation channel. `YarrService.data_dir` (set from `resolve_data_dir()` in main.rs/cli.rs) roots both quota-managed artifacts and the atomic snippet store; `None` disables both.
+Run a JS async arrow fn that calls yarr actions — port of lab's gateway Code Mode. The `codemode` action (the single MCP `yarr` tool) / `yarr codemode --code|--file` (CLI) take a `code` string; the script gets **per-service callables `<service>.<verb>(params)`** with the service baked in (generated OpenAPI operations for the 7 spec-backed kinds via the `op` action, curated commands for download/stats/subtitles/trace), a typed `api.<service>.get/post/put/delete(path, body)` client, `callTool(action, params)` escape hatch, `codemode.search`/`describe` discovery, `codemode.run(name, input)`/`codemode.snippets()`, and `writeArtifact(path, content, options?)`. Returns `{result, calls, logs, artifacts, artifactsRunId?}`. Engine is in-process QuickJS via `rquickjs` (no wasmtime/subprocess), with four concurrent runtimes, a 500 ms admission timeout, and a 30 s absolute deadline. It runs on a `spawn_blocking` thread; `callTool`/`writeArtifact`/the internal embed bridge are synchronous native fns that block on a channel round-trip to the async dispatcher, so JS `async`/`await` is driven by a microtask pump. Requires `yarr:write`. Every inner action is independently reauthorized; destructive inner calls require MCP elicitation and fail closed when the peer cannot elicit. Direct trusted CLI execution has no elicitation channel. `YarrService.data_dir` (set from `resolve_data_dir()` in main.rs/cli.rs) roots both quota-managed artifacts and the atomic snippet store; `None` disables both.
 
 `codemode.search` is lexical (token/substring) by default. Setting `YARR_CODEMODE_TEI_URL` blends in a semantic-similarity score (see `src/codemode/semantic.rs`) computed via a TEI (Text Embeddings Inference) server, so a query sharing no tokens with the right catalog entry (a synonym) can still surface it. Unset by default (no network call ever attempted); fails open to today's lexical-only ranking on any TEI error/timeout/cooldown. Catalog embeddings are computed lazily on first use and cached for the process's lifetime on `YarrService.semantic_cache` (`Arc<SemanticCache>`, shared across every clone).
 
@@ -79,7 +82,7 @@ Run a JS async arrow fn that calls yarr actions — port of lab's gateway Code M
 | `src/codemode/proxy.rs` | Cached preamble builder — `callTool`, `console`, `__yarrRun`, per-service generated/curated callables, `api.<service>`, and discovery/snippet helpers |
 | `src/codemode/semantic.rs` | `SemanticCache` (catalog-embedding cache + failure cooldown) and `semantic_scores(cache, tei_url, catalog, query)` — the TEI HTTP client + cosine-similarity ranking behind `codemode.search`'s blend. Fails open, always |
 | `src/codemode/catalog.rs` | Registry-derived discovery catalog (`catalog_json()`), one entry per action — name/kind/scope/destructive/required_params/capability/allowed_kinds |
-| `src/codemode/dts.rs` | JsonSchema→TypeScript converter for the **5 doc-based** `src/models` contracts → `service.TypeName` entries; `type_catalog_json_for(services)` MERGES these with the **generated** TS for the 6 spec-backed kinds, injected as `__codemodeTypes` and surfaced ON DEMAND via `codemode.describe`/`search` (configured-service-scoped) |
+| `src/codemode/dts.rs` | JsonSchema→TypeScript converter for the **5 doc-based** `src/models` contracts → `service.TypeName` entries; `type_catalog_json_for(services)` MERGES these with the **generated** TS for the 7 spec-backed kinds, injected as `__codemodeTypes` and surfaced ON DEMAND via `codemode.describe`/`search` (configured-service-scoped) |
 | `src/codemode/artifact.rs` | Pure fail-closed artifact-path validation (`validate_artifact_path`, `resolve_under_root`) + content-type inference |
 | `src/codemode/store.rs` | Snippet store: `validate_snippet_name` (allowlist), `list`/`save`/`load_source`/`delete` under `<data_dir>/codemode/snippets` |
 | `src/app/codemode.rs` | `YarrService::run_script` (shared executor; `codemode` = `run_script(code,None,false)`), dual-channel drain loop (calls + artifacts), `codemode_dispatch` (boxed recursion; refuses self/`snippet_run`-in-snippet — destructive actions dispatch normally), `snippet_list/save/run/delete`, `write_codemode_artifact` |
@@ -182,7 +185,7 @@ If you find yourself computing, filtering, transforming, or validating data in `
 
 ## How to add an action (checklist)
 
-New surface for the 6 spec-backed services is added by **regenerating** from the
+New surface for the 7 spec-backed services is added by **regenerating** from the
 specs (`cargo xtask gen-openapi`), not hand-written. Curated commands remain only for
 the doc-based download/stats/subtitles/trace capabilities (descriptor-table driven). The generic
 `ACTION_SPECS` set (`service_status`, `api_get/post/put/delete`, `help`, `codemode`,
@@ -343,7 +346,7 @@ Grammar: the CLI is **service-grouped** (`yarr <service> <command> [flags]`).
 By default (`YARR_MCP_TOOL_MODE=codemode`) **the MCP surface is a single tool,
 `yarr`** (`schemas::yarr_tool()`), taking one `code` param — it dispatches the
 `codemode` action, and the whole fleet is reached inside the script via per-service
-callables `<service>.<verb>()` (generated ops for the 6 spec-backed kinds; curated
+callables `<service>.<verb>()` (generated ops for the 7 spec-backed kinds; curated
 for download/stats/subtitles/trace) plus `api.<service>`/`callTool` + `codemode.search`/`describe`.
 So the agent carries one tool schema, not one per service. Every action is still
 reachable (from inside `yarr`, and from the CLI); the per-service action dispatch

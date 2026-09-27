@@ -99,11 +99,22 @@ pub(super) fn encode_request_body(
                 value: value.clone(),
             }))
         }
-        BodyEncoding::FormUrlEncoded => Ok(Some(EncodedRequestBody::Form(form_pairs(
-            required_object_body(spec, args)?,
-            representation.encoding_metadata,
-        )?))),
+        BodyEncoding::FormUrlEncoded => {
+            let body = required_object_body(spec, args)?;
+            validate_json_body_schema(
+                kind,
+                spec.name,
+                representation.schema,
+                &Value::Object(body.clone()),
+                &format!("operation `{}` form body", spec.name),
+            )?;
+            Ok(Some(EncodedRequestBody::Form(form_pairs(
+                body,
+                representation.encoding_metadata,
+            )?)))
+        }
         BodyEncoding::Multipart => Ok(Some(EncodedRequestBody::Multipart(multipart_fields(
+            kind,
             spec,
             args,
             representation,
@@ -156,6 +167,7 @@ fn form_pairs(
 }
 
 fn multipart_fields(
+    kind: ServiceKind,
     spec: &OperationSpec,
     args: &serde_json::Map<String, Value>,
     representation: &RepresentationSpec,
@@ -202,6 +214,26 @@ fn multipart_fields(
         "operation `{}` requires multipart `body` or `multipartFileBase64`",
         spec.name
     );
+    let mut value = args
+        .get("body")
+        .and_then(Value::as_object)
+        .cloned()
+        .unwrap_or_default();
+    for field in &fields {
+        if let MultipartField::File {
+            name, file_name, ..
+        } = field
+        {
+            value.insert(name.clone(), Value::String(file_name.clone()));
+        }
+    }
+    validate_json_body_schema(
+        kind,
+        spec.name,
+        representation.schema,
+        &Value::Object(value),
+        &format!("operation `{}` multipart body", spec.name),
+    )?;
     Ok(fields)
 }
 

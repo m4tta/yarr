@@ -4,11 +4,12 @@ use anyhow::Result;
 use reqwest::Method;
 use serde_json::Value;
 
-use super::response::ResponseMode;
+use super::response::{ResponseMode, is_auth_failure};
 use super::{YarrClient, auth};
 use crate::config::{ServiceConfig, ServiceKind};
 
 /// Fully encoded request payload used by generated OpenAPI operations.
+#[derive(Clone)]
 pub(crate) enum EncodedRequestBody {
     Json { media_type: String, value: Value },
     Form(Vec<(String, String)>),
@@ -17,6 +18,7 @@ pub(crate) enum EncodedRequestBody {
     Binary { media_type: String, bytes: Vec<u8> },
 }
 
+#[derive(Clone)]
 pub(crate) enum MultipartField {
     Text {
         name: String,
@@ -57,6 +59,25 @@ impl YarrClient {
             expected_encoding,
             expected_media_type,
         } = input;
+        let mode = ResponseMode::OpenApi {
+            expected_encoding,
+            expected_media_type: expected_media_type.to_string(),
+        };
+        if service.kind == ServiceKind::Qbittorrent
+            && let Some(EncodedRequestBody::Multipart(fields)) = &body
+        {
+            return self
+                .request_qbit_multipart_with_auth_retry(
+                    method,
+                    service,
+                    url,
+                    headers,
+                    fields.clone(),
+                    accept,
+                    mode,
+                )
+                .await;
+        }
         let http = if service.kind == ServiceKind::Qbittorrent {
             let session = self.qbit_session(service)?;
             session.ensure(service).await?;
@@ -64,42 +85,90 @@ impl YarrClient {
         } else {
             &self.client
         };
-        let mut request = http.request(method, url);
-        for (name, value) in headers {
-            request = request.header(name, value);
-        }
-        // Apply configured credentials last so a generated header/cookie
-        // parameter can never replace transport authentication.
-        request = auth::apply_auth(request, service);
-        if let Some(accept) = accept {
-            request = request.header(reqwest::header::ACCEPT, accept);
-        }
-        request = match body {
-            None => request,
-            Some(EncodedRequestBody::Json { media_type, value }) => request
-                .header(reqwest::header::CONTENT_TYPE, media_type)
-                .json(&value),
-            Some(EncodedRequestBody::Form(values)) => request.form(&values),
-            Some(EncodedRequestBody::Text { media_type, value }) => request
-                .header(reqwest::header::CONTENT_TYPE, media_type)
-                .body(value),
-            Some(EncodedRequestBody::Binary { media_type, bytes }) => request
-                .header(reqwest::header::CONTENT_TYPE, media_type)
-                .body(bytes),
-            Some(EncodedRequestBody::Multipart(fields)) => {
-                request.multipart(build_multipart_form(fields)?)
-            }
-        };
-        self.finish_with_retry_mode(
-            service,
-            request,
-            ResponseMode::OpenApi {
-                expected_encoding,
-                expected_media_type: expected_media_type.to_string(),
-            },
-        )
-        .await
+        let request = build_openapi_request(http, method, service, url, headers, body, accept)?;
+        self.finish_with_retry_mode(service, request, mode).await
     }
+
+    /// Multipart bodies are streaming and reqwest cannot clone their request
+    /// builder. Retain the already bounded encoded fields so an authentication
+    /// rejection can rebuild the exact request once after refreshing the SID.
+    #[allow(clippy::too_many_arguments)]
+    async fn request_qbit_multipart_with_auth_retry(
+        &self,
+        method: Method,
+        service: &ServiceConfig,
+        url: reqwest::Url,
+        headers: &[(String, String)],
+        fields: Vec<MultipartField>,
+        accept: Option<&str>,
+        mode: ResponseMode,
+    ) -> Result<Value> {
+        let session = self.qbit_session(service)?;
+        session.ensure(service).await?;
+        let request = build_openapi_request(
+            session.client(),
+            method.clone(),
+            service,
+            url.clone(),
+            headers,
+            Some(EncodedRequestBody::Multipart(fields.clone())),
+            accept,
+        )?;
+        match self.finish(service, request, mode.clone()).await {
+            Err(error) if is_auth_failure(&error) => {
+                self.refresh_qbit_session(service).await?;
+                let retry = build_openapi_request(
+                    session.client(),
+                    method,
+                    service,
+                    url,
+                    headers,
+                    Some(EncodedRequestBody::Multipart(fields)),
+                    accept,
+                )?;
+                self.finish(service, retry, mode).await
+            }
+            result => result,
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn build_openapi_request(
+    http: &reqwest::Client,
+    method: Method,
+    service: &ServiceConfig,
+    url: reqwest::Url,
+    headers: &[(String, String)],
+    body: Option<EncodedRequestBody>,
+    accept: Option<&str>,
+) -> Result<reqwest::RequestBuilder> {
+    let mut request = http.request(method, url);
+    for (name, value) in headers {
+        request = request.header(name, value);
+    }
+    // Apply configured credentials last so a generated header/cookie
+    // parameter can never replace transport authentication.
+    request = auth::apply_auth(request, service);
+    if let Some(accept) = accept {
+        request = request.header(reqwest::header::ACCEPT, accept);
+    }
+    Ok(match body {
+        None => request,
+        Some(EncodedRequestBody::Json { media_type, value }) => request
+            .header(reqwest::header::CONTENT_TYPE, media_type)
+            .json(&value),
+        Some(EncodedRequestBody::Form(values)) => request.form(&values),
+        Some(EncodedRequestBody::Text { media_type, value }) => request
+            .header(reqwest::header::CONTENT_TYPE, media_type)
+            .body(value),
+        Some(EncodedRequestBody::Binary { media_type, bytes }) => request
+            .header(reqwest::header::CONTENT_TYPE, media_type)
+            .body(bytes),
+        Some(EncodedRequestBody::Multipart(fields)) => {
+            request.multipart(build_multipart_form(fields)?)
+        }
+    })
 }
 
 fn build_multipart_form(fields: Vec<MultipartField>) -> Result<reqwest::multipart::Form> {

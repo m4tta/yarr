@@ -72,12 +72,13 @@ Primary capabilities:
 - Fleet status checks across the configured services.
 - Credentialed upstream API passthrough for known service kinds.
 - Table-driven OpenAPI operation metadata for Sonarr, Radarr, Prowlarr,
-  Overseerr, Jellyfin, and Plex. The executor preserves the declared parameter,
+  Overseerr, Jellyfin, Plex, and qBittorrent. The executor preserves the declared parameter,
   request-media, and successful-response transport contract; unsupported rows
   are excluded and listed in the generated
   [capability matrix](https://github.com/dinglebear-ai/yarr/blob/main/docs/TOOLS_ACTIONS_ENDPOINTS.md#generated-operations-spec-backed-services).
 - Curated commands for SABnzbd, qBittorrent, Tautulli, Bazarr, and Tracearr,
-  whose upstreams do not ship usable machine-readable specs.
+  including qBittorrent convenience controls alongside its locally maintained
+  OpenAPI contract.
 - Code Mode over MCP for multi-step media automation scripts.
 - Snippet storage and execution for repeatable Code Mode workflows.
 - Skills-only direct-HTTP plugin fallbacks for each individual service.
@@ -400,6 +401,29 @@ Supported service kinds are `sonarr`, `radarr`, `prowlarr`, `tautulli`,
 
 `*_API_KEY` covers most Arr-style services. qBittorrent uses username/password
 login. Plex and Jellyfin token headers are handled separately.
+
+Multiple instances of the same kind can use distinct names:
+
+```bash
+YARR_SERVICES=sonarr,radarr,plex,qbit_movies,qbit_tv
+YARR_QBIT_MOVIES_KIND=qbittorrent
+YARR_QBIT_MOVIES_URL=http://media-server:8082
+YARR_QBIT_MOVIES_USERNAME=...
+YARR_QBIT_MOVIES_PASSWORD=...
+YARR_QBIT_TV_KIND=qbittorrent
+YARR_QBIT_TV_URL=http://media-server:8081
+YARR_QBIT_TV_USERNAME=...
+YARR_QBIT_TV_PASSWORD=...
+```
+
+Keep the Sonarr/Radarr/Plex settings from above when using this service list.
+Call `qbit_movies.download_queue()` or `qbit_tv.download_queue()` to select an
+instance explicitly. qBittorrent convenience controls include transfer status, start/stop,
+global and per-torrent speed limits, categories/tags, and torrent deletion with
+or without data. Its generated API also covers preferences, torrent contents,
+trackers, peers, priorities, storage, RSS, search, uploads, and exports.
+See [qBittorrent controls](docs/API.md#qbittorrent-controls) for
+parameters and examples. Each instance has its own authentication session.
 
 `YARR_MCP_TOOL_MODE=codemode` is the default. Use
 `YARR_MCP_TOOL_MODE=flat` only when a gateway should see separate per-service

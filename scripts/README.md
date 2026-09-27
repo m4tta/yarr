@@ -17,11 +17,13 @@ Maintenance and automation scripts for the template. Shell scripts are written f
 | `check-dependency-updates.sh` | Report lockfile-compatible and latest dependency updates. |
 | `check-file-size.sh` | Pre-commit source file size budget. |
 | `check-plugin-hook-contract.py` | Audit the binary-owned `setup plugin-hook` JSON contract across Rust MCP servers. |
+| `check-qbittorrent-openapi.py` | Compare the local qBittorrent contract and coverage inventory with pinned 5.2.3 upstream controller routes and parameters. |
 | `check-runtime-current.sh` | Detect stale Docker/systemd runtimes. |
 | `check-schema-docs.py` | Generate/check `docs/MCP_SCHEMA.md` and action docs. |
 | `check-security-exceptions.sh` | Verify recorded security exceptions are still justified and unexpired. |
 | `check-version-sync.sh` | Check version consistency. |
 | `generate-cli.sh` | Generate a standalone CLI for this server via mcporter (requires running server). |
+| `generate-qbittorrent-openapi.py` | Regenerate the maintained qBittorrent spec and coverage inventory from reviewed endpoint contracts. |
 | `install.sh` | Install the latest GitHub Release binary and create a `yarr` symlink. |
 | `kache-gate.sh` | Fail the build when the kache compiler cache silently degrades: snapshot counters with `--baseline` before the build, diff after, enforce hit-rate floor / remote-hit / daemon thresholds from `KACHE_GATE_*` env. kache is fail-open, so this gate is the only red signal. Fleet-copied from soma; keep pure ASCII. |
 | `kache-gate-selftest.sh` | Prove `kache-gate.sh` actually rejects a degraded build (cold all-miss profile) and accepts a clean one, so the gate cannot rot into a no-op. |
@@ -34,6 +36,7 @@ Maintenance and automation scripts for the template. Shell scripts are written f
 | `sync-plugin-manifests.js` | Couple every `@dinglebear/yarr@<version>` launcher pin to `packages/yarr-mcp/package.json`; `--check` fails on drift. |
 | `test-installers.js` | Exercise the install paths shipped with the npm launcher. |
 | `test-mcp-auth.sh` | Smoke-test HTTP MCP bearer auth. |
+| `test-qbittorrent-openapi-audit.py` | Prove the qBittorrent coverage audit rejects missing routes, incorrect methods/required fields, and impossible enum types without network access. |
 | `test-plugin-distribution.js` | Assert standalone/bundled skill parity, pinned launchers, and that every plugin ships its lifecycle hooks. |
 | `test-plugin-http.js` | Smoke-test the plugin's HTTP surface. |
 | `test-template-features.sh` | Fast template invariant smoke tests. |
@@ -45,6 +48,21 @@ Maintenance and automation scripts for the template. Shell scripts are written f
 ---
 
 ## Script reference
+
+### `check-qbittorrent-openapi.py`
+
+```bash
+python3 scripts/generate-qbittorrent-openapi.py
+python3 scripts/check-qbittorrent-openapi.py
+python3 scripts/test-qbittorrent-openapi-audit.py
+python3 scripts/check-qbittorrent-openapi.py --source-root /path/to/qBittorrent
+```
+
+The default downloads pinned official controller files; `--source-root` uses a
+local checkout of the revision recorded in `specs/qbittorrent-coverage.json`.
+The audit rejects missing/extra operations, method mismatches, and missing
+source-observed parameters. It verifies coverage of routes and declared input
+fields; real-server behavior is checked separately by `tests/qbit-lab/lab.py`.
 
 ### `asciicheck.py`
 

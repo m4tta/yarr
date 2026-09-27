@@ -82,8 +82,8 @@ fn render_service_kinds(out: &mut String) {
 
 There is one published MCP tool (`yarr`). The table below lists the service
 *kinds* a configured service can take — each kind's capability, upstream API
-prefix, and path allowlist (from `ServiceKind::descriptor()`). The 6 spec-backed
-kinds (sonarr/radarr/prowlarr/overseerr/jellyfin/plex) expose supported upstream
+prefix, and path allowlist (from `ServiceKind::descriptor()`). The 7 spec-backed
+kinds (sonarr/radarr/prowlarr/overseerr/jellyfin/plex/qbittorrent) expose supported upstream
 operations as generated operations, with explicit omissions in the matrix below;
 the rest keep curated commands and/or generic passthrough.
 
@@ -155,16 +155,19 @@ fn render_generated_operations(out: &mut String) {
         r#"
 ## Generated Operations (spec-backed services)
 
-`sonarr`, `radarr`, `prowlarr`, `overseerr`, `jellyfin`, and `plex` are generated
-from their vendored OpenAPI specs (`cargo xtask gen-openapi` →
+`sonarr`, `radarr`, `prowlarr`, `overseerr`, `jellyfin`, `plex`, and `qbittorrent` are generated
+from their OpenAPI specs (`cargo xtask gen-openapi` →
 `src/openapi/generated/`). Every supported spec operation becomes a per-service callable
 (`sonarr.get_series()`, `radarr.post_movie({ body })`) dispatched via the `op`
-action; unsupported rows are explicitly omitted below. There are no hand-written
-curated commands for these kinds. Discover them
+action; unsupported rows are explicitly omitted below. qBittorrent uses a locally
+maintained contract audited against pinned upstream source, and also retains its
+curated download helpers. Discover operations
 with `codemode.search(query)` and inspect signatures / response types with
 `codemode.describe(path)`. Direct local CLI scripts use the operator's local
 trust boundary. MCP Code Mode re-authorizes every inner operation and requires
-client elicitation for DELETEs; clients without elicitation support fail closed.
+client elicitation for destructive/disruptive operations, including POST-based
+qBittorrent torrent deletion and application administration; clients without
+elicitation support fail closed.
 
 "#,
     );

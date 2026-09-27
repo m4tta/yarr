@@ -153,6 +153,14 @@ fn curated_param_description(param: &str) -> Option<&'static str> {
         "start" | "length" => {
             "Pagination knob for action=stats_history (start=offset, length=page size)."
         }
+        "download_limit" | "upload_limit" => {
+            "qBittorrent rate limit in bytes/second; zero means unlimited. Omit id/hash to set the global limit."
+        }
+        "category" => {
+            "One qBittorrent category. Omit it from download_set_category to clear the assignment."
+        }
+        "save_path" => "qBittorrent category save path.",
+        "tags" => "qBittorrent tag names as an array; each item names exactly one tag.",
         _ => return None,
     })
 }

@@ -61,6 +61,78 @@ pub(super) const STATS_ENDPOINTS: &[EndpointRow] = &[
 
 pub(super) const DOWNLOAD_ENDPOINTS: &[EndpointRow] = &[
     EndpointRow {
+        action: "download_transfer",
+        tools: "qbittorrent",
+        endpoint: "`GET /api/v2/transfer/info`",
+        notes: "Global connection, speeds, totals, and limits.",
+    },
+    EndpointRow {
+        action: "download_set_limits",
+        tools: "qbittorrent",
+        endpoint: "form `POST /api/v2/transfer/setDownloadLimit` and/or `setUploadLimit` (use the `torrents` group for per-torrent limits)",
+        notes: "Integer bytes/second; zero is unlimited. No selector means global; id/hash selects one torrent. Two limits are separate requests.",
+    },
+    EndpointRow {
+        action: "download_categories",
+        tools: "qbittorrent",
+        endpoint: "`GET /api/v2/torrents/categories`",
+        notes: "",
+    },
+    EndpointRow {
+        action: "download_create_category",
+        tools: "qbittorrent",
+        endpoint: "form `POST /api/v2/torrents/createCategory`",
+        notes: "Category and optional save path.",
+    },
+    EndpointRow {
+        action: "download_edit_category",
+        tools: "qbittorrent",
+        endpoint: "form `POST /api/v2/torrents/editCategory`",
+        notes: "Update category save path.",
+    },
+    EndpointRow {
+        action: "download_remove_category",
+        tools: "qbittorrent",
+        endpoint: "form `POST /api/v2/torrents/removeCategories`",
+        notes: "Remove one category; does not delete torrents or data.",
+    },
+    EndpointRow {
+        action: "download_set_category",
+        tools: "qbittorrent",
+        endpoint: "form `POST /api/v2/torrents/setCategory`",
+        notes: "Assign one torrent; omit category to clear.",
+    },
+    EndpointRow {
+        action: "download_tags",
+        tools: "qbittorrent",
+        endpoint: "`GET /api/v2/torrents/tags`",
+        notes: "",
+    },
+    EndpointRow {
+        action: "download_create_tags",
+        tools: "qbittorrent",
+        endpoint: "form `POST /api/v2/torrents/createTags`",
+        notes: "Accepts an array of individual tag names.",
+    },
+    EndpointRow {
+        action: "download_delete_tags",
+        tools: "qbittorrent",
+        endpoint: "form `POST /api/v2/torrents/deleteTags`",
+        notes: "Delete tag definitions; does not delete torrents or data.",
+    },
+    EndpointRow {
+        action: "download_add_tags",
+        tools: "qbittorrent",
+        endpoint: "form `POST /api/v2/torrents/addTags`",
+        notes: "Assign tags to one torrent.",
+    },
+    EndpointRow {
+        action: "download_remove_tags",
+        tools: "qbittorrent",
+        endpoint: "form `POST /api/v2/torrents/removeTags`",
+        notes: "Remove selected tags from one torrent; omitted/empty tags clears all its tags.",
+    },
+    EndpointRow {
         action: "download_queue",
         tools: "sabnzbd",
         endpoint: "`GET /api?mode=queue&output=json`",

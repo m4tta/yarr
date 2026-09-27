@@ -24,7 +24,7 @@
 
 use yarr::{
     Capability, Command, ServiceKind, action_is_destructive, all_action_names,
-    capability_verb_tables, curated_commands, parse_args_from,
+    capability_verb_tables, curated_commands, parse_args_from, valid_actions_for_kind,
 };
 
 /// A representative service name for each capability, used to drive CLI parsing.
@@ -58,6 +58,13 @@ fn minimal_flags(action: &str) -> &'static [&'static str] {
         // DownloadClient.
         "download_add" => &["--url", "http://example/x.torrent"],
         "download_remove" => &["--id", "1"],
+        "download_set_limits" => &["--download-limit", "0"],
+        "download_create_category" | "download_remove_category" => &["--category", "example"],
+        "download_edit_category" => &["--category", "example", "--save-path", "/downloads/example"],
+        "download_set_category" => &["--hash", "abc123"],
+        "download_create_tags" | "download_delete_tags" => &["--tag", "example"],
+        "download_add_tags" => &["--hash", "abc123", "--tag", "example"],
+        "download_remove_tags" => &["--hash", "abc123"],
         // MediaServer.
         "media_search" => &["--query", "foo"],
         // Requests.
@@ -98,8 +105,12 @@ fn every_curated_command_is_in_the_mcp_action_enum() {
 #[test]
 fn every_curated_command_is_reachable_from_the_cli() {
     for (cap, verbs) in capability_verb_tables() {
-        let service = representative_service(*cap);
         for (verb, action) in *verbs {
+            let service = ServiceKind::ALL
+                .iter()
+                .find(|kind| valid_actions_for_kind(**kind).contains(action))
+                .map(|kind| kind.as_str())
+                .unwrap_or_else(|| representative_service(*cap));
             let cmd = parse_cli(service, verb, minimal_flags(action));
             match cmd {
                 Command::Curated { action: got, .. } => assert_eq!(

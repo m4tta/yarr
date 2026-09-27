@@ -1,0 +1,5863 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "qBittorrent WebUI API",
+    "version": "5.2.3-webapi-2.15.1",
+    "description": "Local maintained contract for the qBittorrent 5.2.3 WebUI API, pinned to official source and the official 5.0+ API wiki.",
+    "x-upstream-commit": "0b63c3d17373f6132ea211c9dcd4241284ccdfaf"
+  },
+  "servers": [
+    {
+      "url": "/api/v2"
+    }
+  ],
+  "security": [
+    {
+      "SID": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "app"
+    },
+    {
+      "name": "clientdata"
+    },
+    {
+      "name": "log"
+    },
+    {
+      "name": "rss"
+    },
+    {
+      "name": "search"
+    },
+    {
+      "name": "sync"
+    },
+    {
+      "name": "torrentcreator"
+    },
+    {
+      "name": "torrents"
+    },
+    {
+      "name": "transfer"
+    }
+  ],
+  "paths": {
+    "/app/buildInfo": {
+      "get": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "get_app_build_info",
+        "summary": "Get app build info",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildInfo"
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/app/cookies": {
+      "get": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "get_app_cookies",
+        "summary": "Get app cookies",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CookieList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/app/defaultSavePath": {
+      "get": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "get_app_default_save_path",
+        "summary": "Get app default save path",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/app/deleteAPIKey": {
+      "post": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "post_app_delete_a_p_i_key",
+        "summary": "Run app delete a p i key",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/getDirectoryContent": {
+      "get": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "get_app_get_directory_content",
+        "summary": "List server directory contents",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectoryContents"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "dirPath",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "dirs",
+                "files"
+              ]
+            }
+          },
+          {
+            "name": "withMetadata",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ]
+      }
+    },
+    "/app/networkInterfaceAddressList": {
+      "get": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "get_app_network_interface_address_list",
+        "summary": "Get app network interface address list",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StringList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "iface",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/app/networkInterfaceList": {
+      "get": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "get_app_network_interface_list",
+        "summary": "Get app network interface list",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkInterfaceList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/app/preferences": {
+      "get": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "get_app_preferences",
+        "summary": "Get app preferences",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DynamicObject"
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/app/processInfo": {
+      "get": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "get_app_process_info",
+        "summary": "Get app process info",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessInfo"
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/app/rotateAPIKey": {
+      "post": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "post_app_rotate_a_p_i_key",
+        "summary": "Run app rotate a p i key",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIKey"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/sendTestEmail": {
+      "post": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "post_app_send_test_email",
+        "summary": "Run app send test email",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/setCookies": {
+      "post": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "post_app_set_cookies",
+        "summary": "Run app set cookies",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cookies": {
+                    "type": "string",
+                    "description": "JSON encoded as a string form/query value. Use JSON.stringify before calling."
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "cookies"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/setPreferences": {
+      "post": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "post_app_set_preferences",
+        "summary": "Run app set preferences",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "json": {
+                    "type": "string",
+                    "description": "JSON encoded as a string form/query value. Use JSON.stringify before calling."
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "json"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/shutdown": {
+      "post": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "post_app_shutdown",
+        "summary": "Shut down qBittorrent",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/app/version": {
+      "get": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "get_app_version",
+        "summary": "Get app version",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/app/webapiVersion": {
+      "get": {
+        "tags": [
+          "app"
+        ],
+        "operationId": "get_webapi_version",
+        "summary": "Get app webapi version",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/clientdata/load": {
+      "get": {
+        "tags": [
+          "clientdata"
+        ],
+        "operationId": "get_client_data_load",
+        "summary": "Get clientdata load",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DynamicObject"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "keys",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "JSON encoded as a string form/query value. Use JSON.stringify before calling."
+            }
+          }
+        ]
+      }
+    },
+    "/clientdata/store": {
+      "post": {
+        "tags": [
+          "clientdata"
+        ],
+        "operationId": "post_client_data_store",
+        "summary": "Run clientdata store",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "string",
+                    "description": "JSON encoded as a string form/query value. Use JSON.stringify before calling."
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "data"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/log/main": {
+      "get": {
+        "tags": [
+          "log"
+        ],
+        "operationId": "get_log_main",
+        "summary": "Get log main",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogEntryList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "normal",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "info",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "warning",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "critical",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "last_known_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ]
+      }
+    },
+    "/log/peers": {
+      "get": {
+        "tags": [
+          "log"
+        ],
+        "operationId": "get_log_peers",
+        "summary": "Get log peers",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeerLogEntryList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "last_known_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ]
+      }
+    },
+    "/rss/addFeed": {
+      "post": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "post_rss_add_feed",
+        "summary": "Run rss add feed",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "refreshInterval": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "url",
+                  "path"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rss/addFolder": {
+      "post": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "post_rss_add_folder",
+        "summary": "Run rss add folder",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rss/items": {
+      "get": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "get_rss_items",
+        "summary": "Get rss items",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DynamicObject"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "withData",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ]
+      }
+    },
+    "/rss/markAsRead": {
+      "post": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "post_rss_mark_as_read",
+        "summary": "Run rss mark as read",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "itemPath": {
+                    "type": "string"
+                  },
+                  "articleId": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "itemPath"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rss/matchingArticles": {
+      "get": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "get_rss_matching_articles",
+        "summary": "Get rss matching articles",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DynamicObject"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ruleName",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/rss/moveItem": {
+      "post": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "post_rss_move_item",
+        "summary": "Run rss move item",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "itemPath": {
+                    "type": "string"
+                  },
+                  "destPath": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "itemPath",
+                  "destPath"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rss/refreshItem": {
+      "post": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "post_rss_refresh_item",
+        "summary": "Run rss refresh item",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "itemPath": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "itemPath"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rss/removeItem": {
+      "post": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "post_rss_remove_item",
+        "summary": "Run rss remove item",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rss/removeRule": {
+      "post": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "post_rss_remove_rule",
+        "summary": "Run rss remove rule",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ruleName": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "ruleName"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rss/renameRule": {
+      "post": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "post_rss_rename_rule",
+        "summary": "Run rss rename rule",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ruleName": {
+                    "type": "string"
+                  },
+                  "newRuleName": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "ruleName",
+                  "newRuleName"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rss/rules": {
+      "get": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "get_rss_rules",
+        "summary": "Get rss rules",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DynamicObject"
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/rss/setFeedRefreshInterval": {
+      "post": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "post_rss_set_feed_refresh_interval",
+        "summary": "Run rss set feed refresh interval",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "refreshInterval": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "path",
+                  "refreshInterval"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rss/setFeedURL": {
+      "post": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "post_rss_set_feed_u_r_l",
+        "summary": "Run rss set feed u r l",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "path",
+                  "url"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rss/setRule": {
+      "post": {
+        "tags": [
+          "rss"
+        ],
+        "operationId": "post_rss_set_rule",
+        "summary": "Run rss set rule",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ruleName": {
+                    "type": "string"
+                  },
+                  "ruleDef": {
+                    "type": "string",
+                    "description": "JSON encoded as a string form/query value. Use JSON.stringify before calling."
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "ruleName",
+                  "ruleDef"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/delete": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "operationId": "post_search_delete",
+        "summary": "Run search delete",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/downloadTorrent": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "operationId": "post_search_download_torrent",
+        "summary": "Run search download torrent",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "torrentUrl": {
+                    "type": "string"
+                  },
+                  "pluginName": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "torrentUrl",
+                  "pluginName"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/enablePlugin": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "operationId": "post_search_enable_plugin",
+        "summary": "Run search enable plugin",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "names": {
+                    "type": "string"
+                  },
+                  "enable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "names",
+                  "enable"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/installPlugin": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "operationId": "post_search_install_plugin",
+        "summary": "Run search install plugin",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sources": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "sources"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/plugins": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "operationId": "get_search_plugins",
+        "summary": "Get search plugins",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchPluginList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/search/results": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "operationId": "get_search_results",
+        "summary": "Get search results",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ]
+      }
+    },
+    "/search/start": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "operationId": "post_search_start",
+        "summary": "Run search start",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchStart"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pattern": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "plugins": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "pattern",
+                  "category",
+                  "plugins"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/status": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "operationId": "get_search_status",
+        "summary": "Get search status",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchStatusList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ]
+      }
+    },
+    "/search/stop": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "operationId": "post_search_stop",
+        "summary": "Run search stop",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/uninstallPlugin": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "operationId": "post_search_uninstall_plugin",
+        "summary": "Run search uninstall plugin",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "names": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "names"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/updatePlugins": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "operationId": "post_search_update_plugins",
+        "summary": "Run search update plugins",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sync/maindata": {
+      "get": {
+        "tags": [
+          "sync"
+        ],
+        "operationId": "get_sync_maindata",
+        "summary": "Get sync maindata",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DynamicObject"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "rid",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ]
+      }
+    },
+    "/sync/torrentPeers": {
+      "get": {
+        "tags": [
+          "sync"
+        ],
+        "operationId": "get_sync_torrent_peers",
+        "summary": "Get sync torrent peers",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DynamicObject"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "rid",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ]
+      }
+    },
+    "/torrentcreator/addTask": {
+      "post": {
+        "tags": [
+          "torrentcreator"
+        ],
+        "operationId": "post_torrent_creator_add_task",
+        "summary": "Run torrentcreator add task",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TorrentCreatorStart"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sourcePath": {
+                    "type": "string"
+                  },
+                  "private": {
+                    "type": "boolean"
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "v1",
+                      "v2",
+                      "hybrid"
+                    ]
+                  },
+                  "optimizeAlignment": {
+                    "type": "boolean"
+                  },
+                  "paddedFileSizeLimit": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "pieceSize": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "torrentFilePath": {
+                    "type": "string"
+                  },
+                  "comment": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "trackers": {
+                    "type": "string"
+                  },
+                  "urlSeeds": {
+                    "type": "string"
+                  },
+                  "startSeeding": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "sourcePath"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrentcreator/deleteTask": {
+      "post": {
+        "tags": [
+          "torrentcreator"
+        ],
+        "operationId": "post_torrent_creator_delete_task",
+        "summary": "Run torrentcreator delete task",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "taskID": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "taskID"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrentcreator/status": {
+      "get": {
+        "tags": [
+          "torrentcreator"
+        ],
+        "operationId": "get_torrent_creator_status",
+        "summary": "Get torrentcreator status",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TorrentCreatorTaskList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "taskID",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/torrentcreator/torrentFile": {
+      "get": {
+        "tags": [
+          "torrentcreator"
+        ],
+        "operationId": "get_torrent_creator_torrent_file",
+        "summary": "Get torrentcreator torrent file",
+        "responses": {
+          "200": {
+            "description": "Torrent metainfo file",
+            "content": {
+              "application/x-bittorrent": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "taskID",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/torrents/SSLParameters": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrent_ssl_parameters",
+        "summary": "Get torrents s s l parameters",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SSLParameters"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ]
+      }
+    },
+    "/torrents/add": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_add",
+        "summary": "Add a torrent from a URL or uploaded torrent file",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "torrents": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "urls": {
+                    "type": "string"
+                  },
+                  "savepath": {
+                    "type": "string"
+                  },
+                  "downloadPath": {
+                    "type": "string"
+                  },
+                  "useDownloadPath": {
+                    "type": "boolean"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "tags": {
+                    "type": "string"
+                  },
+                  "skip_checking": {
+                    "type": "boolean"
+                  },
+                  "sequentialDownload": {
+                    "type": "boolean"
+                  },
+                  "firstLastPiecePrio": {
+                    "type": "boolean"
+                  },
+                  "forced": {
+                    "type": "boolean"
+                  },
+                  "addToTopOfQueue": {
+                    "type": "boolean"
+                  },
+                  "stopped": {
+                    "type": "boolean"
+                  },
+                  "rename": {
+                    "type": "string"
+                  },
+                  "upLimit": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "dlLimit": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "ratioLimit": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "seedingTimeLimit": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "inactiveSeedingTimeLimit": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "shareLimitAction": {
+                    "type": "string",
+                    "enum": [
+                      "Default",
+                      "Stop",
+                      "Remove",
+                      "RemoveWithContent",
+                      "EnableSuperSeeding"
+                    ]
+                  },
+                  "autoTMM": {
+                    "type": "boolean"
+                  },
+                  "stopCondition": {
+                    "type": "string",
+                    "enum": [
+                      "None",
+                      "MetadataReceived",
+                      "FilesChecked"
+                    ]
+                  },
+                  "contentLayout": {
+                    "type": "string",
+                    "enum": [
+                      "Original",
+                      "Subfolder",
+                      "NoSubfolder"
+                    ]
+                  },
+                  "filePriorities": {
+                    "type": "string"
+                  },
+                  "downloader": {
+                    "type": "string"
+                  },
+                  "ssl_certificate": {
+                    "type": "string"
+                  },
+                  "ssl_private_key": {
+                    "type": "string"
+                  },
+                  "ssl_dh_params": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "anyOf": [
+                  {
+                    "required": [
+                      "urls"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "torrents"
+                    ]
+                  }
+                ]
+              },
+              "encoding": {
+                "torrents": {
+                  "contentType": "application/x-bittorrent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/addPeers": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_add_peers",
+        "summary": "Run torrents add peers",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DynamicObject"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "peers": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes",
+                  "peers"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/addTags": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_add_tags",
+        "summary": "Run torrents add tags",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "tags": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes",
+                  "tags"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/addTrackers": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_add_trackers",
+        "summary": "Run torrents add trackers",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hash": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "urls": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hash",
+                  "urls"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/addWebSeeds": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_add_web_seeds",
+        "summary": "Run torrents add web seeds",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hash": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "urls": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hash",
+                  "urls"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/bottomPrio": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_bottom_prio",
+        "summary": "Run torrents bottom prio",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/categories": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrents_categories",
+        "summary": "Get torrents categories",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryMap"
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/torrents/count": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrent_count",
+        "summary": "Get torrents count",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "description": "Torrent count encoded as decimal text. Parse the response text as a number."
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/torrents/createCategory": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_create_category",
+        "summary": "Run torrents create category",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string"
+                  },
+                  "savePath": {
+                    "type": "string"
+                  },
+                  "downloadPath": {
+                    "type": "string"
+                  },
+                  "downloadPathEnabled": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "category"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/createTags": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_create_tags",
+        "summary": "Run torrents create tags",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tags": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "tags"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/decreasePrio": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_decrease_prio",
+        "summary": "Run torrents decrease prio",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/delete": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_delete",
+        "summary": "Run torrents delete",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "deleteFiles": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes",
+                  "deleteFiles"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/deleteTags": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_delete_tags",
+        "summary": "Run torrents delete tags",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tags": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "tags"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/downloadLimit": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrents_download_limit",
+        "summary": "Get torrents download limit",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LimitMap"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hashes",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+              "minLength": 1
+            }
+          }
+        ]
+      }
+    },
+    "/torrents/editCategory": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_edit_category",
+        "summary": "Run torrents edit category",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string"
+                  },
+                  "savePath": {
+                    "type": "string"
+                  },
+                  "downloadPath": {
+                    "type": "string"
+                  },
+                  "downloadPathEnabled": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "category",
+                  "savePath"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/editTracker": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_edit_tracker",
+        "summary": "Run torrents edit tracker",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hash": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "newUrl": {
+                    "type": "string"
+                  },
+                  "tier": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hash",
+                  "url"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/editWebSeed": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_edit_web_seed",
+        "summary": "Run torrents edit web seed",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hash": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "origUrl": {
+                    "type": "string"
+                  },
+                  "newUrl": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hash",
+                  "origUrl",
+                  "newUrl"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/export": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrent_export",
+        "summary": "Get torrents export",
+        "responses": {
+          "200": {
+            "description": "Torrent metainfo file",
+            "content": {
+              "application/x-bittorrent": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ]
+      }
+    },
+    "/torrents/fetchMetadata": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_fetch_metadata",
+        "summary": "Fetch torrent metadata asynchronously",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TorrentMetadata"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TorrentMetadata"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string"
+                  },
+                  "downloader": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "source"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/filePrio": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_file_prio",
+        "summary": "Run torrents file prio",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hash": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "priority": {
+                    "type": "integer",
+                    "format": "int64",
+                    "enum": [
+                      0,
+                      1,
+                      6,
+                      7
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hash",
+                  "id",
+                  "priority"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/files": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrent_files",
+        "summary": "Get torrents files",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TorrentFileInfoList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "indexes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/torrents/increasePrio": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_increase_prio",
+        "summary": "Run torrents increase prio",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/info": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrents",
+        "summary": "Get torrents info",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TorrentInfoList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "downloading",
+                "seeding",
+                "completed",
+                "stopped",
+                "active",
+                "inactive",
+                "running",
+                "stalled",
+                "stalled_uploading",
+                "stalled_downloading",
+                "errored"
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reverse",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "hashes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "private",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "includeFiles",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "includeTrackers",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ]
+      }
+    },
+    "/torrents/parseMetadata": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_parse_metadata",
+        "summary": "Parse an uploaded torrent file",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TorrentMetadataList"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "torrent": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "torrent"
+                ]
+              },
+              "encoding": {
+                "torrent": {
+                  "contentType": "application/x-bittorrent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/pieceAvailability": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrent_piece_availability",
+        "summary": "Get torrents piece availability",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegerList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ]
+      }
+    },
+    "/torrents/pieceHashes": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrent_piece_hashes",
+        "summary": "Get torrents piece hashes",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StringList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ]
+      }
+    },
+    "/torrents/pieceStates": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrent_piece_states",
+        "summary": "Get torrents piece states",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegerList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ]
+      }
+    },
+    "/torrents/properties": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrent_properties",
+        "summary": "Get torrents properties",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TorrentProperties"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ]
+      }
+    },
+    "/torrents/reannounce": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_reannounce",
+        "summary": "Run torrents reannounce",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "urls": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/recheck": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_recheck",
+        "summary": "Run torrents recheck",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/removeCategories": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_remove_categories",
+        "summary": "Run torrents remove categories",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "categories": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "categories"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/removeTags": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_remove_tags",
+        "summary": "Run torrents remove tags",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "tags": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/removeTrackers": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_remove_trackers",
+        "summary": "Run torrents remove trackers",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hash": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "urls": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hash",
+                  "urls"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/removeWebSeeds": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_remove_web_seeds",
+        "summary": "Run torrents remove web seeds",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hash": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "urls": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hash",
+                  "urls"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/rename": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_rename",
+        "summary": "Run torrents rename",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hash": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hash",
+                  "name"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/renameFile": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_rename_file",
+        "summary": "Run torrents rename file",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hash": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "oldPath": {
+                    "type": "string"
+                  },
+                  "newPath": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hash",
+                  "oldPath",
+                  "newPath"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/renameFolder": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_rename_folder",
+        "summary": "Run torrents rename folder",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hash": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "oldPath": {
+                    "type": "string"
+                  },
+                  "newPath": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hash",
+                  "oldPath",
+                  "newPath"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/saveMetadata": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrent_metadata_file",
+        "summary": "Download fetched torrent metadata",
+        "responses": {
+          "200": {
+            "description": "Torrent metainfo file",
+            "content": {
+              "application/x-bittorrent": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/torrents/setAutoManagement": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_set_auto_management",
+        "summary": "Run torrents set auto management",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "enable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes",
+                  "enable"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/setCategory": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_set_category",
+        "summary": "Run torrents set category",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "category": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes",
+                  "category"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/setComment": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_set_comment",
+        "summary": "Run torrents set comment",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes",
+                  "comment"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/setDownloadLimit": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_set_download_limit",
+        "summary": "Run torrents set download limit",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes",
+                  "limit"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/setDownloadPath": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_set_download_path",
+        "summary": "Run torrents set download path",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "path": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "path"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/setForceStart": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_set_force_start",
+        "summary": "Run torrents set force start",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "value": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes",
+                  "value"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/setLocation": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_set_location",
+        "summary": "Run torrents set location",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "location": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes",
+                  "location"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/setSSLParameters": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_set_s_s_l_parameters",
+        "summary": "Run torrents set s s l parameters",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hash": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "ssl_certificate": {
+                    "type": "string"
+                  },
+                  "ssl_private_key": {
+                    "type": "string"
+                  },
+                  "ssl_dh_params": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hash",
+                  "ssl_certificate",
+                  "ssl_private_key",
+                  "ssl_dh_params"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/setSavePath": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_set_save_path",
+        "summary": "Run torrents set save path",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "path": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "path"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/setShareLimits": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_set_share_limits",
+        "summary": "Run torrents set share limits",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "ratioLimit": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "seedingTimeLimit": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "inactiveSeedingTimeLimit": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "shareLimitAction": {
+                    "type": "string",
+                    "enum": [
+                      "Default",
+                      "Stop",
+                      "Remove",
+                      "RemoveWithContent",
+                      "EnableSuperSeeding"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes",
+                  "ratioLimit",
+                  "seedingTimeLimit",
+                  "inactiveSeedingTimeLimit",
+                  "shareLimitAction"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/setSuperSeeding": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_set_super_seeding",
+        "summary": "Run torrents set super seeding",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "value": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes",
+                  "value"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/setTags": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_set_tags",
+        "summary": "Run torrents set tags",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "tags": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes",
+                  "tags"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/setUploadLimit": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_set_upload_limit",
+        "summary": "Run torrents set upload limit",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes",
+                  "limit"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/start": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_start",
+        "summary": "Run torrents start",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/stop": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_stop",
+        "summary": "Run torrents stop",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/tags": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrents_tags",
+        "summary": "Get torrents tags",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StringList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/torrents/toggleFirstLastPiecePrio": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_toggle_first_last_piece_prio",
+        "summary": "Run torrents toggle first last piece prio",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/toggleSequentialDownload": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_toggle_sequential_download",
+        "summary": "Run torrents toggle sequential download",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/topPrio": {
+      "post": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "post_torrents_top_prio",
+        "summary": "Run torrents top prio",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hashes": {
+                    "type": "string",
+                    "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "hashes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/torrents/trackers": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrent_trackers",
+        "summary": "Get torrents trackers",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TorrentTrackerList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ]
+      }
+    },
+    "/torrents/uploadLimit": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrents_upload_limit",
+        "summary": "Get torrents upload limit",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LimitMap"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hashes",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Pipe-delimited identifiers; `all` is accepted where supported by qBittorrent.",
+              "minLength": 1
+            }
+          }
+        ]
+      }
+    },
+    "/torrents/webseeds": {
+      "get": {
+        "tags": [
+          "torrents"
+        ],
+        "operationId": "get_torrent_webseeds",
+        "summary": "Get torrents webseeds",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TorrentWebSeedList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ]
+      }
+    },
+    "/transfer/banPeers": {
+      "post": {
+        "tags": [
+          "transfer"
+        ],
+        "operationId": "post_transfer_ban_peers",
+        "summary": "Run transfer ban peers",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "peers": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "peers"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transfer/downloadLimit": {
+      "get": {
+        "tags": [
+          "transfer"
+        ],
+        "operationId": "get_transfer_download_limit",
+        "summary": "Get transfer download limit",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "description": "Decimal integer encoded as text. Parse the response text as a number."
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/transfer/info": {
+      "get": {
+        "tags": [
+          "transfer"
+        ],
+        "operationId": "get_transfer_info",
+        "summary": "Get transfer info",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferInfo"
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/transfer/setDownloadLimit": {
+      "post": {
+        "tags": [
+          "transfer"
+        ],
+        "operationId": "post_transfer_set_download_limit",
+        "summary": "Run transfer set download limit",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "limit": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "limit"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transfer/setSpeedLimitsMode": {
+      "post": {
+        "tags": [
+          "transfer"
+        ],
+        "operationId": "post_transfer_set_speed_limits_mode",
+        "summary": "Run transfer set speed limits mode",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "mode"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transfer/setUploadLimit": {
+      "post": {
+        "tags": [
+          "transfer"
+        ],
+        "operationId": "post_transfer_set_upload_limit",
+        "summary": "Run transfer set upload limit",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "limit": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "limit"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transfer/speedLimitsMode": {
+      "get": {
+        "tags": [
+          "transfer"
+        ],
+        "operationId": "get_transfer_speed_limits_mode",
+        "summary": "Get transfer speed limits mode",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "description": "Decimal integer encoded as text. Parse the response text as a number."
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/transfer/toggleSpeedLimitsMode": {
+      "post": {
+        "tags": [
+          "transfer"
+        ],
+        "operationId": "post_transfer_toggle_speed_limits_mode",
+        "summary": "Run transfer toggle speed limits mode",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transfer/uploadLimit": {
+      "get": {
+        "tags": [
+          "transfer"
+        ],
+        "operationId": "get_transfer_upload_limit",
+        "summary": "Get transfer upload limit",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "description": "Decimal integer encoded as text. Parse the response text as a number."
+                }
+              }
+            }
+          }
+        },
+        "parameters": []
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "SID": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "SID",
+        "description": "Yarr's qBittorrent transport logs in and manages the upstream SID cookie. qBittorrent API-key bearer authentication is an upstream alternative but is not used by this transport."
+      }
+    },
+    "schemas": {
+      "DynamicObject": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "Text": {
+        "type": "string"
+      },
+      "Integer": {
+        "type": "integer",
+        "format": "int64"
+      },
+      "StringList": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "IntegerList": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "BuildInfo": {
+        "type": "object",
+        "properties": {
+          "qt": {
+            "type": "string"
+          },
+          "libtorrent": {
+            "type": "string"
+          },
+          "boost": {
+            "type": "string"
+          },
+          "openssl": {
+            "type": "string"
+          },
+          "zlib": {
+            "type": "string"
+          },
+          "bitness": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "platform": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "ProcessInfo": {
+        "type": "object",
+        "properties": {
+          "launch_time": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "launch_time"
+        ]
+      },
+      "Cookie": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "expirationDate": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": true
+      },
+      "DirectoryEntry": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "dir",
+              "file"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "creation_date": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last_access_date": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last_modification_date": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": true
+      },
+      "NetworkInterface": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "name",
+          "value"
+        ]
+      },
+      "LogEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "PeerLogEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ip": {
+            "type": "string"
+          },
+          "blocked": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "TransferInfo": {
+        "type": "object",
+        "properties": {
+          "dl_info_speed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "dl_info_data": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "up_info_speed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "up_info_data": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "dl_rate_limit": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "up_rate_limit": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "dht_nodes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "connection_status": {
+            "type": "string"
+          },
+          "queueing": {
+            "type": "boolean"
+          },
+          "use_alt_speed_limits": {
+            "type": "boolean"
+          },
+          "refresh_interval": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": true
+      },
+      "TorrentInfo": {
+        "type": "object",
+        "properties": {
+          "hash": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "progress": {
+            "type": "number",
+            "format": "double"
+          },
+          "dlspeed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "upspeed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "priority": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "num_seeds": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "num_leechs": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ratio": {
+            "type": "number",
+            "format": "double"
+          },
+          "eta": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "state": {
+            "type": "string"
+          },
+          "seq_dl": {
+            "type": "boolean"
+          },
+          "f_l_piece_prio": {
+            "type": "boolean"
+          },
+          "category": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "string"
+          },
+          "save_path": {
+            "type": "string"
+          },
+          "download_path": {
+            "type": "string"
+          },
+          "added_on": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completion_on": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tracker": {
+            "type": "string"
+          },
+          "trackers_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "files_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "private": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "TorrentProperties": {
+        "type": "object",
+        "properties": {
+          "time_elapsed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "seeding_time": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "eta": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "nb_connections": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "nb_connections_limit": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total_downloaded": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total_downloaded_session": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total_uploaded": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total_uploaded_session": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "dl_speed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "dl_speed_avg": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "up_speed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "up_speed_avg": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "dl_limit": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "up_limit": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total_wasted": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "seeds": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "seeds_total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "peers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "peers_total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "share_ratio": {
+            "type": "number",
+            "format": "double"
+          },
+          "popularity": {
+            "type": "number",
+            "format": "double"
+          },
+          "reannounce": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total_size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pieces_num": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "piece_size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pieces_have": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "last_seen": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "addition_date": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completion_date": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "creation_date": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "save_path": {
+            "type": "string"
+          },
+          "download_path": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "private": {
+            "type": "boolean"
+          },
+          "has_metadata": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "TorrentTracker": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tier": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "msg": {
+            "type": "string"
+          },
+          "num_peers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "num_seeds": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "num_leeches": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "num_downloaded": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "next_announce": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "min_announce": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": true
+      },
+      "TorrentWebSeed": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "url"
+        ]
+      },
+      "TorrentFileInfo": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "progress": {
+            "type": "number",
+            "format": "double"
+          },
+          "priority": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "is_seed": {
+            "type": "boolean"
+          },
+          "piece_range": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "availability": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": true
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "savePath": {
+            "type": "string"
+          },
+          "downloadPath": {
+            "type": "string"
+          },
+          "downloadPathEnabled": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "SearchPlugin": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "supportedCategories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "SearchStatus": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": true
+      },
+      "SearchResult": {
+        "type": "object",
+        "properties": {
+          "descrLink": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileUrl": {
+            "type": "string"
+          },
+          "nbLeechers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "nbSeeders": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "siteUrl": {
+            "type": "string"
+          },
+          "pubDate": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": true
+      },
+      "TorrentCreatorTask": {
+        "type": "object",
+        "properties": {
+          "taskID": {
+            "type": "string"
+          },
+          "sourcePath": {
+            "type": "string"
+          },
+          "pieceSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "private": {
+            "type": "boolean"
+          },
+          "format": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "progress": {
+            "type": "number",
+            "format": "double"
+          },
+          "timeAdded": {
+            "type": "string"
+          },
+          "timeStarted": {
+            "type": "string"
+          },
+          "timeFinished": {
+            "type": "string"
+          },
+          "errorMessage": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "SSLParameters": {
+        "type": "object",
+        "properties": {
+          "ssl_certificate": {
+            "type": "string"
+          },
+          "ssl_private_key": {
+            "type": "string"
+          },
+          "ssl_dh_params": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "APIKey": {
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "apiKey"
+        ]
+      },
+      "SearchStart": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "id"
+        ]
+      },
+      "TorrentCreatorStart": {
+        "type": "object",
+        "properties": {
+          "taskID": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "taskID"
+        ]
+      },
+      "TorrentMetadata": {
+        "type": "object",
+        "properties": {
+          "hash": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "trackers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "LimitMap": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "CategoryMap": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Category"
+        }
+      },
+      "CookieList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Cookie"
+        }
+      },
+      "DirectoryContents": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/components/schemas/DirectoryEntry"
+            }
+          ]
+        }
+      },
+      "NetworkInterfaceList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/NetworkInterface"
+        }
+      },
+      "LogEntryList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/LogEntry"
+        }
+      },
+      "PeerLogEntryList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/PeerLogEntry"
+        }
+      },
+      "TorrentInfoList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TorrentInfo"
+        }
+      },
+      "TorrentTrackerList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TorrentTracker"
+        }
+      },
+      "TorrentWebSeedList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TorrentWebSeed"
+        }
+      },
+      "TorrentFileInfoList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TorrentFileInfo"
+        }
+      },
+      "SearchPluginList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SearchPlugin"
+        }
+      },
+      "SearchStatusList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SearchStatus"
+        }
+      },
+      "SearchResults": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "TorrentCreatorTaskList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TorrentCreatorTask"
+        }
+      },
+      "TorrentMetadataList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TorrentMetadata"
+        }
+      }
+    }
+  }
+}

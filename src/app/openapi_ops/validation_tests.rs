@@ -10,6 +10,7 @@ fn compiles_request_schemas_for_every_generated_service() {
         ServiceKind::Overseerr,
         ServiceKind::Jellyfin,
         ServiceKind::Plex,
+        ServiceKind::Qbittorrent,
     ] {
         let validators = validators_for(kind).unwrap_or_else(|error| {
             panic!(

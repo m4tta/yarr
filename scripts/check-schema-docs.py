@@ -78,7 +78,7 @@ def action_description(action: str) -> str:
         "api_delete": "Proxy a credentialed DELETE request to an allowed upstream API prefix.",
         "help": "Return the in-tool action reference. Public; no scope required.",
         "codemode": "Run a JavaScript async arrow function that orchestrates yarr actions (the single `yarr` tool); returns { result, calls, logs }.",
-        "op": "Invoke a generated OpenAPI operation by name on a spec-backed service (sonarr/radarr/prowlarr/overseerr/jellyfin/plex).",
+        "op": "Invoke a generated OpenAPI operation by name on a spec-backed service (sonarr/radarr/prowlarr/overseerr/jellyfin/plex/qbittorrent).",
         "snippet_list": "List saved Code Mode snippets.",
         "snippet_save": "Save a Code Mode snippet by name for later reuse.",
         "snippet_run": "Run a saved Code Mode snippet by name, optionally with input.",

@@ -34,7 +34,7 @@ python3 scripts/check-schema-docs.py --check
 | `api_delete` | `yarr:write` | Proxy a credentialed DELETE request to an allowed upstream API prefix. |
 | `help` | public | Return the in-tool action reference. Public; no scope required. |
 | `codemode` | `yarr:write` | Run a JavaScript async arrow function that orchestrates yarr actions (the single `yarr` tool); returns { result, calls, logs }. |
-| `op` | `yarr:write` | Invoke a generated OpenAPI operation by name on a spec-backed service (sonarr/radarr/prowlarr/overseerr/jellyfin/plex). |
+| `op` | `yarr:write` | Invoke a generated OpenAPI operation by name on a spec-backed service (sonarr/radarr/prowlarr/overseerr/jellyfin/plex/qbittorrent). |
 | `snippet_list` | `yarr:read` | List saved Code Mode snippets. |
 | `snippet_save` | `yarr:write` | Save a Code Mode snippet by name for later reuse. |
 | `snippet_run` | `yarr:write` | Run a saved Code Mode snippet by name, optionally with input. |

@@ -128,13 +128,13 @@ fn render_service_namespaces(services: &[(String, ServiceKind)]) -> String {
         // `{name:?}` emits a quoted, escaped JS string literal. `service` is merged
         // LAST so a script can never override the baked-in binding.
         out.push_str(&format!("globalThis[{name:?}] = {{\n"));
+        out.push_str(&format!(
+            "  [\"service_status\"]: (params) => callTool(\"service_status\", {{ service: {name:?} }}),\n"
+        ));
         if crate::openapi::is_generated(*kind) {
-            // Spec-backed kind: every callable is a generated OpenAPI operation,
-            // dispatched through the `op` action. `args` carries path/query params
-            // and (for body ops) `args.body`.
-            out.push_str(&format!(
-                "  [\"service_status\"]: (params) => callTool(\"service_status\", {{ service: {name:?} }}),\n"
-            ));
+            // Generated operations and curated convenience commands are
+            // additive. A doc-backed kind can gain an OpenAPI registry without
+            // losing its higher-level stable helpers.
             for op in crate::openapi::operations_for_kind(*kind) {
                 let op_name = op.name;
                 out.push_str(&format!(
@@ -142,13 +142,15 @@ fn render_service_namespaces(services: &[(String, ServiceKind)]) -> String {
                      {{ service: {name:?}, op: {op_name:?}, args: params || {{}} }}),\n"
                 ));
             }
-        } else {
-            for action in service_action_names(*kind) {
-                out.push_str(&format!(
-                    "  [{action:?}]: (params) => callTool({action:?}, \
-                     Object.assign({{}}, params || {{}}, {{ service: {name:?} }})),\n"
-                ));
-            }
+        }
+        for action in service_action_names(*kind)
+            .into_iter()
+            .filter(|action| *action != "service_status")
+        {
+            out.push_str(&format!(
+                "  [{action:?}]: (params) => callTool({action:?}, \
+                 Object.assign({{}}, params || {{}}, {{ service: {name:?} }})),\n"
+            ));
         }
         out.push_str("};\n");
     }
@@ -212,7 +214,11 @@ globalThis.codemode.describe = (name) => {
     // A callable, by its fully-qualified path (e.g. "radarr.add")?
     const call = globalThis.__codemodeCatalog.find((e) => e.path === name);
     if (call) {
-        const sig = call.path + "(" + (call.required_params || []).join(", ") + ")";
+        const multipartAlternatives = (((call.request_body || {}).multipart || {}).requiredAlternatives || [])
+            .map((alternative) => alternative.join(" + ")).join(" | ");
+        const sigParams = (call.required_params || []).slice();
+        if (multipartAlternatives) sigParams.push(multipartAlternatives);
+        const sig = call.path + "(" + sigParams.join(", ") + ")";
         return Object.assign({}, call, { signature: sig });
     }
     // A response type, by "service.TypeName" or an unambiguous bare "TypeName".

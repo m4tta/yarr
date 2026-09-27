@@ -27,6 +27,18 @@ pub const VERBS: &[(&str, &str)] = &[
     ("pause", "download_pause"),
     ("resume", "download_resume"),
     ("remove", "download_remove"),
+    ("transfer", "download_transfer"),
+    ("set-limits", "download_set_limits"),
+    ("categories", "download_categories"),
+    ("create-category", "download_create_category"),
+    ("edit-category", "download_edit_category"),
+    ("remove-category", "download_remove_category"),
+    ("set-category", "download_set_category"),
+    ("tags", "download_tags"),
+    ("create-tags", "download_create_tags"),
+    ("delete-tags", "download_delete_tags"),
+    ("add-tags", "download_add_tags"),
+    ("remove-tags", "download_remove_tags"),
 ];
 
 /// Try to parse `verb [rest]` as a DownloadClient curated command for `kind`.
@@ -41,6 +53,9 @@ pub fn parse(kind: ServiceKind, verb: &str, rest: &[String]) -> Result<Option<Co
     let Some(action) = resolve(verb)? else {
         return Ok(None);
     };
+    if !crate::actions::commands::download::command_supports_kind(action, kind) {
+        return Err(anyhow!("`{verb}` is only supported for qbittorrent"));
+    }
 
     // Branch on the PARSING SHAPE only — keyed by the friendly verb, not a second
     // verb→action mapping.
@@ -56,6 +71,20 @@ pub fn parse(kind: ServiceKind, verb: &str, rest: &[String]) -> Result<Option<Co
         "pause" => parse_state(kind, action, "pause", rest).map(Some),
         "resume" => parse_state(kind, action, "resume", rest).map(Some),
         "remove" => parse_remove(kind, action, rest).map(Some),
+        "transfer" | "categories" | "tags" => {
+            reject_args(rest, verb)?;
+            Ok(Some(Command::Curated {
+                action,
+                params: Value::Object(base_params(kind)),
+            }))
+        }
+        "set-limits" => parse_limits(kind, action, rest).map(Some),
+        "create-category" | "edit-category" | "remove-category" | "set-category" => {
+            parse_category(kind, action, verb, rest).map(Some)
+        }
+        "create-tags" | "delete-tags" | "add-tags" | "remove-tags" => {
+            parse_tags(kind, action, verb, rest).map(Some)
+        }
         // `resolve` only returns `Some` for verbs in `VERBS`; all are handled above.
         _ => unreachable!("VERBS verb `{verb}` has no parse arm"),
     }
@@ -149,6 +178,172 @@ fn parse_remove(kind: ServiceKind, action: &'static str, rest: &[String]) -> Res
         action,
         params: Value::Object(params),
     })
+}
+
+fn parse_limits(kind: ServiceKind, action: &'static str, rest: &[String]) -> Result<Command> {
+    let mut params = base_params(kind);
+    let mut i = 0;
+    while i < rest.len() {
+        match rest[i].as_str() {
+            flag @ ("--id" | "--hash") => {
+                insert_once(
+                    &mut params,
+                    &flag[2..],
+                    take_value(rest, &mut i, flag)?,
+                    flag,
+                )?;
+            }
+            flag @ ("--download-limit" | "--upload-limit") => {
+                let value = take_value(rest, &mut i, flag)?
+                    .parse::<i64>()
+                    .map_err(|_| anyhow!("{flag} requires an integer byte/second value"))?;
+                let key = flag[2..].replace('-', "_");
+                if params.insert(key, json!(value)).is_some() {
+                    return Err(anyhow!("set-limits received duplicate {flag}"));
+                }
+            }
+            other => return Err(anyhow!("set-limits does not accept argument `{other}`")),
+        }
+        i += 1;
+    }
+    if !params.contains_key("download_limit") && !params.contains_key("upload_limit") {
+        return Err(anyhow!(
+            "set-limits requires --download-limit or --upload-limit"
+        ));
+    }
+    reject_both_selectors(&params, "set-limits")?;
+    Ok(Command::Curated {
+        action,
+        params: Value::Object(params),
+    })
+}
+
+fn parse_category(
+    kind: ServiceKind,
+    action: &'static str,
+    verb: &str,
+    rest: &[String],
+) -> Result<Command> {
+    let mut params = base_params(kind);
+    let mut i = 0;
+    while i < rest.len() {
+        match rest[i].as_str() {
+            flag @ ("--id" | "--hash" | "--category" | "--save-path") => {
+                let allowed = match verb {
+                    "create-category" => ["--category", "--save-path"].contains(&flag),
+                    "edit-category" => ["--category", "--save-path"].contains(&flag),
+                    "remove-category" => flag == "--category",
+                    "set-category" => ["--id", "--hash", "--category"].contains(&flag),
+                    _ => false,
+                };
+                if !allowed {
+                    return Err(anyhow!("{verb} does not accept argument `{flag}`"));
+                }
+                let key = flag[2..].replace('-', "_");
+                insert_once(&mut params, &key, take_value(rest, &mut i, flag)?, flag)?;
+            }
+            other => return Err(anyhow!("{verb} does not accept argument `{other}`")),
+        }
+        i += 1;
+    }
+    match verb {
+        "create-category" | "remove-category" if !params.contains_key("category") => {
+            return Err(anyhow!("{verb} requires --category"));
+        }
+        "edit-category"
+            if !params.contains_key("category") || !params.contains_key("save_path") =>
+        {
+            return Err(anyhow!("edit-category requires --category and --save-path"));
+        }
+        "set-category" => {
+            require_selector(&params, verb)?;
+            reject_both_selectors(&params, verb)?;
+        }
+        _ => {}
+    }
+    Ok(Command::Curated {
+        action,
+        params: Value::Object(params),
+    })
+}
+
+fn parse_tags(
+    kind: ServiceKind,
+    action: &'static str,
+    verb: &str,
+    rest: &[String],
+) -> Result<Command> {
+    let mut params = base_params(kind);
+    let mut tags = Vec::new();
+    let mut i = 0;
+    while i < rest.len() {
+        match rest[i].as_str() {
+            flag @ ("--id" | "--hash") => {
+                if !matches!(verb, "add-tags" | "remove-tags") {
+                    return Err(anyhow!("{verb} does not accept argument `{flag}`"));
+                }
+                insert_once(
+                    &mut params,
+                    &flag[2..],
+                    take_value(rest, &mut i, flag)?,
+                    flag,
+                )?;
+            }
+            flag @ "--tag" => tags.push(take_value(rest, &mut i, flag)?),
+            other => return Err(anyhow!("{verb} does not accept argument `{other}`")),
+        }
+        i += 1;
+    }
+    if !tags.is_empty() {
+        params.insert("tags".into(), json!(tags));
+    }
+    match verb {
+        "create-tags" | "delete-tags" if !params.contains_key("tags") => {
+            return Err(anyhow!("{verb} requires at least one --tag"));
+        }
+        "add-tags" => {
+            require_selector(&params, verb)?;
+            reject_both_selectors(&params, verb)?;
+            if !params.contains_key("tags") {
+                return Err(anyhow!("add-tags requires at least one --tag"));
+            }
+        }
+        "remove-tags" => {
+            require_selector(&params, verb)?;
+            reject_both_selectors(&params, verb)?;
+        }
+        _ => {}
+    }
+    Ok(Command::Curated {
+        action,
+        params: Value::Object(params),
+    })
+}
+
+fn insert_once(
+    params: &mut Map<String, Value>,
+    key: &str,
+    value: String,
+    flag: &str,
+) -> Result<()> {
+    if params.insert(key.to_owned(), json!(value)).is_some() {
+        return Err(anyhow!("received duplicate {flag}"));
+    }
+    Ok(())
+}
+
+fn require_selector(params: &Map<String, Value>, verb: &str) -> Result<()> {
+    if !params.contains_key("id") && !params.contains_key("hash") {
+        return Err(anyhow!("{verb} requires --id or --hash"));
+    }
+    Ok(())
+}
+
+fn reject_both_selectors(params: &Map<String, Value>, verb: &str) -> Result<()> {
+    if params.contains_key("id") && params.contains_key("hash") {
+        return Err(anyhow!("{verb} accepts exactly one of --id or --hash"));
+    }
+    Ok(())
 }
 
 /// Initial params map carrying the positional service.

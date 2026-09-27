@@ -68,7 +68,8 @@ impl YarrService {
         let url = build_operation_url(config, spec.path, &path, &query)?;
         let body = encode_request_body(config.kind, spec, object)?;
         let response = select_response(spec, object)?;
-        self.client_ref()
+        let result = self
+            .client_ref()
             .request_openapi_url(OpenApiRequest {
                 method: spec.method.as_reqwest(),
                 service: config,
@@ -79,7 +80,19 @@ impl YarrService {
                 expected_encoding: response.encoding,
                 expected_media_type: response.media_type,
             })
-            .await
+            .await?;
+        if config.kind == crate::config::ServiceKind::Qbittorrent
+            && !spec.method.is_read()
+            && result.get("ok") == Some(&Value::Bool(true))
+            && result.get("status").is_some()
+        {
+            return Ok(serde_json::json!({
+                "submitted": true,
+                "status": result["status"],
+                "note": "qBittorrent returned no confirmation body; read back the affected resource to verify the outcome",
+            }));
+        }
+        Ok(result)
     }
 }
 

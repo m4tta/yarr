@@ -1,7 +1,7 @@
 ---
 title: "yarr API"
 created: 2026-05-22
-updated: 2026-09-26
+updated: 2026-09-27
 ---
 
 # yarr API
@@ -21,7 +21,7 @@ Tool name: `yarr`
 Inside `code` you have:
 
 - **Per-service callables** with the service baked in — table-driven operations
-  for the 6 spec-backed services and curated commands for download, stats,
+  for the 7 spec-backed services and curated commands for download, stats,
   subtitles, and trace capabilities. Use `codemode.describe()` for the exact
   parameters available in this build.
 - **Raw passthrough**: `api.<service>.get/post/put/delete(path, body)`.
@@ -135,7 +135,7 @@ yarr radarr post --path /api/v3/command --body '{"name":"RefreshMovie"}'
 yarr sonarr put --path /api/v3/series/editor --body '{"seriesIds":[1],"qualityProfileId":4}'
 yarr radarr delete --path /api/v3/movie/12
 
-# table-driven operations (the 6 spec-backed services)
+# table-driven operations (the 7 spec-backed services)
 yarr sonarr op get_series
 yarr radarr op post_command --args '{"body":{"name":"MoviesSearch","movieIds":[456]}}'
 
@@ -152,6 +152,106 @@ flag exists). MCP direct and Code Mode-nested destructive calls elicit before
 dispatch and fail closed without approval. CLI ↔ MCP registration parity is
 mechanically enforced by `tests/parity.rs`; transport-specific confirmation is
 intentionally different.
+
+## qBittorrent controls
+
+Give each qBittorrent instance its own configured name, URL, username, and
+password. For example, `qbit_movies` and `qbit_tv` each declare
+`YARR_<NAME>_KIND=qbittorrent`; their sessions and cookie jars remain separate
+even when they use different ports on the same host. Use the exact configured
+name in calls, because `qbittorrent` is ambiguous when there are two instances.
+
+```js
+async () => {
+  const torrents = await qbit_movies.download_queue();
+  const transfer = await qbit_movies.download_transfer();
+  return { count: torrents.length, transfer };
+}
+```
+
+Queue entries include download/upload speed, ETA, progress, state, limits,
+category, and tags. Return a summary or selected entries rather than the entire
+queue when a client has many torrents.
+
+| Operation | Code Mode call |
+| --- | --- |
+| Stop or start one torrent | `download_pause({hash})`, `download_resume({hash})` |
+| Stop or start all torrents | `download_pause()`, `download_resume()` |
+| Set global speed limits | `download_set_limits({download_limit, upload_limit})` |
+| Set one torrent's limits | `download_set_limits({hash, download_limit, upload_limit})` |
+| Read categories | `download_categories()` |
+| Create a category | `download_create_category({category, save_path})` |
+| Edit a category's save path | `download_edit_category({category, save_path})` |
+| Remove a category | `download_remove_category({category})` |
+| Assign or clear a category | `download_set_category({hash, category})`; omit `category` to clear |
+| Read tags | `download_tags()` |
+| Create or delete tags | `download_create_tags({tags:["review"]})`, `download_delete_tags({tags:["review"]})` |
+| Add or remove torrent tags | `download_add_tags({hash, tags:["review"]})`, `download_remove_tags({hash, tags:["review"]})` |
+| Clear all tags on one torrent | `download_remove_tags({hash})` |
+| Remove torrent, preserve data | `download_remove({hash, delete_files:false})` |
+| Remove torrent and its data | `download_remove({hash, delete_files:true})` |
+
+Prefix each call with its configured service, such as `qbit_tv.download_tags()`.
+`id` is an alternative to `hash`; supply one selector, not both, for the new
+controls. Limits are integer **bytes per second**, with `0` meaning unlimited.
+Either limit can be omitted to preserve it. For example, 5 MiB/s is `5242880`.
+qBittorrent stores global limits in KiB/s and may round a byte value; use a
+multiple of 1024 and read back transfer status to verify the applied value.
+Both requested limits are validated before any update, but two limits require
+two upstream requests and are not an atomic transaction.
+
+Category creation can omit `save_path` to use the client's default. Tags are
+arrays of individual names; category/tag operations never delete torrent data.
+Changing a category or its save path can affect where qBittorrent stores files.
+The additional transfer, limit, category, and tag commands are qBittorrent-only;
+the shared queue/add/pause/resume/remove commands also support SABnzbd.
+
+Torrent deletion remains destructive even when preserving data: MCP requires
+confirmation, and `delete_files` defaults to false. qBittorrent often returns
+an empty successful response for writes, including when a hash does not exist;
+read back the queue or corresponding setting to verify the intended change.
+
+### Full WebUI API access
+
+Beyond these convenience commands, qBittorrent has generated per-instance
+operations from a locally maintained OpenAPI contract. They cover application
+preferences, connection settings, logs, incremental synchronization, torrent
+details and files, peers and trackers, queue and file priorities, recheck and
+reannounce, share limits, storage and renaming, automatic management, RSS feeds
+and rules, search and plugins, torrent-file upload, and binary export.
+
+Use discovery for the exact operation and its parameter schema:
+
+```js
+async () => {
+  return codemode.search("qbit_movies trackers");
+}
+```
+
+Pass the returned callable path to `codemode.describe(path)`, then call that
+method on `qbit_movies` or `qbit_tv`. GET parameters are top-level arguments;
+POST form fields go in `body`. The executor applies form encoding automatically.
+Upstream field names and separators are preserved: for example, `hashes` is a
+pipe-separated string or the explicit string `all`, rather than a JSON array.
+Use `download_*` helpers when you want single-torrent selectors and tag arrays.
+
+For multipart uploads, supply `multipartFileBase64`, `fileName`, and any add
+options in `body`; `contentType: "multipart/form-data"` selects that encoding.
+Binary exports return a base64 response envelope. Limits on upload size,
+response size, and Code Mode execution still apply.
+
+The contract is audited against pinned qBittorrent 5.2.3 controller routes in
+[`specs/qbittorrent-coverage.json`](../specs/qbittorrent-coverage.json). Authentication
+is managed by Yarr's transport. Browser-only presentation controls are outside
+the service API. Route coverage is distinct from live validation: the isolated
+[qBittorrent lab](../tests/qbit-lab/README.md) tests representative operations
+against a real server; it does not exercise every preference or search plugin.
+
+MCP confirmation covers destructive and disruptive actions, including torrent
+deletion, automatic-removal share limits, shutdown, API-key changes, application
+preferences, and plugin installation/update.
+Normal download controls execute directly. Generated calls use the same effect
+policy as other MCP entry points.
 
 ## Security Rules
 

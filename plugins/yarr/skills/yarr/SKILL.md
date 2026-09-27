@@ -23,7 +23,7 @@ Rust MCP bridge to the `*arr` media stack and related services. The MCP surface 
 **one tool, `yarr`**: it runs a JavaScript async arrow function (`code`) in a
 sandbox (Code Mode) that reaches the whole fleet. Credentials are handled
 server-side. Inside the script the fleet is reached through per-service callables
-with the service baked in — generated OpenAPI operations for the 6 spec-backed
+with the service baked in — generated OpenAPI operations for the 7 spec-backed
 services, curated commands for download/stats, plus `api.<service>` raw passthrough
 and `callTool`. Discover what's available with `codemode.search`/`codemode.describe`.
 
@@ -33,9 +33,15 @@ and `callTool`. Discover what's available with `codemode.search`/`codemode.descr
 
 - **Per-service callables** with the service baked in (no `service` param):
   `sonarr.get_series()`, `radarr.post_movie({ body })`, `prowlarr.get_indexer()`,
-  `plex.get_sessions()`, … For the 6 spec-backed services these are generated from
+  `plex.get_sessions()`, … For the 7 spec-backed services these are generated from
   the upstream OpenAPI spec (the full API surface), including DELETE ops — see
   Gotcha 3 below for the MCP confirmation boundary.
+  qBittorrent uses a locally maintained contract audited against 5.2.3 source,
+  plus `download_*` convenience calls. Use exact configured names for multiple
+  instances (for example `qbit_movies` and `qbit_tv`). Its generated writes use
+  typed form fields in `body`; `codemode.describe` gives upload controls and
+  parameter schemas. Confirm results with a read: empty acknowledgments alone
+  do not prove that a torrent existed or a background operation completed.
 - **Raw passthrough**: `api.<service>.get/post/put/delete(path, body)`.
 - **Discovery**: `codemode.search(query)` returns fully-qualified callables;
   `codemode.describe(path)` returns a callable's signature OR a response type's
@@ -70,10 +76,10 @@ async () => {
 ### Per-service callables (Tier 2)
 
 Every example below is a `yarr({ code })` call — `code` is one async arrow fn.
-For the 6 spec-backed services (sonarr/radarr/prowlarr/overseerr/jellyfin/plex)
+For the 7 spec-backed services (sonarr/radarr/prowlarr/overseerr/jellyfin/plex/qbittorrent)
 prefer the **generated callables** (full upstream API); fall back to
 `api.<service>.get/post/...(path, body)` for anything not covered and for the
-doc-based services (tautulli/sabnzbd/qbittorrent/bazarr/tracearr). Run
+doc-based services (tautulli/sabnzbd/bazarr/tracearr). Run
 `codemode.search("...")` to find the exact callable + signature, and
 `codemode.describe("sonarr.SeriesResource")` for a response type.
 

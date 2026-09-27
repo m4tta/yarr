@@ -31,6 +31,79 @@ fn generated(service: &str, op: &str, args: Value) -> YarrAction {
 }
 
 #[test]
+fn qbittorrent_post_effects_apply_to_generated_and_raw_calls() {
+    let service = service(&[("qbit_movies", ServiceKind::Qbittorrent)]);
+    for (suffix, expected) in [
+        ("torrents/delete", OperationEffect::Destructive),
+        ("rss/removeItem", OperationEffect::Destructive),
+        ("rss/removeRule", OperationEffect::Destructive),
+        ("search/uninstallPlugin", OperationEffect::Destructive),
+        ("search/installPlugin", OperationEffect::Disruptive),
+        ("search/updatePlugins", OperationEffect::Disruptive),
+        ("app/shutdown", OperationEffect::Disruptive),
+        ("app/deleteAPIKey", OperationEffect::Disruptive),
+        ("app/rotateAPIKey", OperationEffect::Disruptive),
+        ("app/setPreferences", OperationEffect::Disruptive),
+        ("torrents/stop", OperationEffect::Mutating),
+        ("torrents/start", OperationEffect::Mutating),
+        ("torrents/recheck", OperationEffect::Mutating),
+        ("transfer/setDownloadLimit", OperationEffect::Mutating),
+    ] {
+        let path = format!("/api/v2/{suffix}");
+        let spec = openapi::operations_for_kind(ServiceKind::Qbittorrent)
+            .iter()
+            .find(|op| op.path == path && op.method == HttpMethod::Post)
+            .unwrap_or_else(|| panic!("missing qBittorrent route {path}"));
+        for action in [
+            generated("qbit_movies", spec.name, json!({"body": {}})),
+            YarrAction::ApiPost {
+                service: "qbit_movies".into(),
+                path: path.clone(),
+                body: json!({}),
+            },
+        ] {
+            assert_eq!(
+                operation_effect(&service, &action).unwrap(),
+                expected,
+                "{path}"
+            );
+        }
+    }
+}
+
+#[test]
+fn qbittorrent_automatic_removal_is_destructive_even_when_scheduled_for_later() {
+    let service = service(&[("qbit_tv", ServiceKind::Qbittorrent)]);
+    for path in ["/api/v2/torrents/add", "/api/v2/torrents/setShareLimits"] {
+        let spec = openapi::operations_for_kind(ServiceKind::Qbittorrent)
+            .iter()
+            .find(|op| op.path == path)
+            .unwrap();
+        for (setting, expected) in [
+            ("Stop", OperationEffect::Mutating),
+            ("Remove", OperationEffect::Destructive),
+            ("RemoveWithContent", OperationEffect::Destructive),
+        ] {
+            let body = json!({"shareLimitAction": setting});
+            for action in [
+                generated("qbit_tv", spec.name, json!({"body": body})),
+                YarrAction::ApiPost {
+                    service: "qbit_tv".into(),
+                    path: path.into(),
+                    body: body.clone(),
+                },
+            ] {
+                assert_eq!(
+                    operation_effect(&service, &action).unwrap(),
+                    expected,
+                    "{path} {setting}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn plex_non_delete_high_impact_operations_require_confirmation() {
     let service = service(&[("plex", ServiceKind::Plex)]);
     for (op, expected) in [

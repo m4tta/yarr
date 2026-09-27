@@ -3,13 +3,27 @@ use crate::actions::model::{READ_SCOPE, WRITE_SCOPE};
 use crate::capability::Capability;
 
 /// READ verbs.
-const READ_COMMANDS: &[&str] = &["download_queue"];
+const READ_COMMANDS: &[&str] = &[
+    "download_queue",
+    "download_transfer",
+    "download_categories",
+    "download_tags",
+];
 /// WRITE verbs (mutating; `download_remove` is additionally destructive).
 const WRITE_COMMANDS: &[&str] = &[
     "download_add",
     "download_pause",
     "download_resume",
     "download_remove",
+    "download_set_limits",
+    "download_create_category",
+    "download_edit_category",
+    "download_remove_category",
+    "download_set_category",
+    "download_create_tags",
+    "download_delete_tags",
+    "download_add_tags",
+    "download_remove_tags",
 ];
 
 #[test]
@@ -54,13 +68,14 @@ fn action_names_are_capability_prefixed_for_global_uniqueness() {
 
 #[test]
 fn queue_is_read_scope_and_non_mutating() {
-    let cmd = DOWNLOAD_COMMANDS
+    for cmd in DOWNLOAD_COMMANDS
         .iter()
-        .find(|c| c.name == "download_queue")
-        .expect("download_queue registered");
-    assert_eq!(cmd.required_scope, READ_SCOPE);
-    assert!(!cmd.mutates, "queue must not mutate");
-    assert!(!cmd.destructive, "queue must not be destructive");
+        .filter(|c| READ_COMMANDS.contains(&c.name))
+    {
+        assert_eq!(cmd.required_scope, READ_SCOPE, "{}", cmd.name);
+        assert!(!cmd.mutates, "{} must not mutate", cmd.name);
+        assert!(!cmd.destructive, "{} must not be destructive", cmd.name);
+    }
 }
 
 #[test]

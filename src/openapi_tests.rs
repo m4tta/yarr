@@ -33,6 +33,7 @@ fn generated_registry_exposes_explicit_omission_markers() {
         ServiceKind::Overseerr,
         ServiceKind::Jellyfin,
         ServiceKind::Plex,
+        ServiceKind::Qbittorrent,
     ] {
         for omitted in omitted_operations_for_kind(kind) {
             assert!(!omitted.name.is_empty());
@@ -57,6 +58,7 @@ fn every_generated_operation_is_well_formed() {
         ServiceKind::Overseerr,
         ServiceKind::Jellyfin,
         ServiceKind::Plex,
+        ServiceKind::Qbittorrent,
     ];
     for &kind in KINDS {
         let ops = operations_for_kind(kind);

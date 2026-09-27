@@ -12,7 +12,7 @@
 //! `POST /api/v2/torrents/start`. The v4 `pause`/`resume` paths are GONE, so this
 //! module targets the v5 `stop`/`start` names.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde_json::{Value, json};
 
 use crate::app::YarrService;
@@ -47,7 +47,18 @@ fn response_status(response: &Value) -> u16 {
 /// Fields kept for a slimmed `/torrents/info` row — identify a torrent and reason
 /// about its progress/throughput without the (large) full payload.
 const TORRENT_FIELDS: &[&str] = &[
-    "hash", "name", "state", "progress", "dlspeed", "size", "category",
+    "hash", "name", "state", "progress", "dlspeed", "upspeed", "eta", "size", "category", "tags",
+    "dl_limit", "up_limit",
+];
+
+const TRANSFER_FIELDS: &[&str] = &[
+    "connection_status",
+    "dl_info_speed",
+    "up_info_speed",
+    "dl_info_data",
+    "up_info_data",
+    "dl_rate_limit",
+    "up_rate_limit",
 ];
 
 /// Build `{api_prefix}{suffix}` for the qBittorrent service (descriptor-driven —
@@ -62,6 +73,203 @@ pub(super) async fn queue(svc: &YarrService, config: &ServiceConfig) -> Result<V
     let url = crate::yarr::build_url(config, &path)?;
     let raw = svc.client_ref().send_get(config, url, None).await?;
     Ok(slim(raw, TORRENT_FIELDS))
+}
+
+/// GET `/api/v2/transfer/info` → bounded global transfer status and limits.
+pub(super) async fn transfer(svc: &YarrService, config: &ServiceConfig) -> Result<Value> {
+    let path = qbit_path(config, "/transfer/info");
+    let url = crate::yarr::build_url(config, &path)?;
+    let raw = svc.client_ref().send_get(config, url, None).await?;
+    Ok(slim(raw, TRANSFER_FIELDS))
+}
+
+/// Set one or both global/per-torrent byte-per-second limits. The caller has
+/// already validated both limits before this function performs its first POST.
+pub(super) async fn set_limits(
+    svc: &YarrService,
+    config: &ServiceConfig,
+    target: Option<&str>,
+    download_limit: Option<i64>,
+    upload_limit: Option<i64>,
+) -> Result<Value> {
+    let target_name = target.unwrap_or("global");
+    if let Some(limit) = download_limit {
+        let value = limit.to_string();
+        let (suffix, form) = match target {
+            Some(hash) => (
+                "/torrents/setDownloadLimit",
+                vec![("hashes", hash), ("limit", value.as_str())],
+            ),
+            None => (
+                "/transfer/setDownloadLimit",
+                vec![("limit", value.as_str())],
+            ),
+        };
+        post_form(svc, config, suffix, &form).await?;
+    }
+    if let Some(limit) = upload_limit {
+        let value = limit.to_string();
+        let (suffix, form) = match target {
+            Some(hash) => (
+                "/torrents/setUploadLimit",
+                vec![("hashes", hash), ("limit", value.as_str())],
+            ),
+            None => ("/transfer/setUploadLimit", vec![("limit", value.as_str())]),
+        };
+        post_form(svc, config, suffix, &form)
+            .await
+            .with_context(|| {
+                if download_limit.is_some() {
+                    "download limit was applied, but setting upload limit failed"
+                } else {
+                    "setting upload limit failed"
+                }
+            })?;
+    }
+    Ok(json!({
+        "submitted": true,
+        "target": target_name,
+        "downloadLimit": download_limit,
+        "uploadLimit": upload_limit,
+        "unit": "bytes_per_second",
+    }))
+}
+
+pub(super) async fn categories(svc: &YarrService, config: &ServiceConfig) -> Result<Value> {
+    get(svc, config, "/torrents/categories").await
+}
+
+pub(super) async fn create_category(
+    svc: &YarrService,
+    config: &ServiceConfig,
+    category: &str,
+    save_path: &str,
+) -> Result<Value> {
+    post_form(
+        svc,
+        config,
+        "/torrents/createCategory",
+        &[("category", category), ("savePath", save_path)],
+    )
+    .await?;
+    Ok(qbit_submitted(200))
+}
+
+pub(super) async fn edit_category(
+    svc: &YarrService,
+    config: &ServiceConfig,
+    category: &str,
+    save_path: &str,
+) -> Result<Value> {
+    post_form(
+        svc,
+        config,
+        "/torrents/editCategory",
+        &[("category", category), ("savePath", save_path)],
+    )
+    .await?;
+    Ok(qbit_submitted(200))
+}
+
+pub(super) async fn remove_category(
+    svc: &YarrService,
+    config: &ServiceConfig,
+    category: &str,
+) -> Result<Value> {
+    post_form(
+        svc,
+        config,
+        "/torrents/removeCategories",
+        &[("categories", category)],
+    )
+    .await?;
+    Ok(qbit_submitted(200))
+}
+
+pub(super) async fn set_category(
+    svc: &YarrService,
+    config: &ServiceConfig,
+    hash: &str,
+    category: &str,
+) -> Result<Value> {
+    post_form(
+        svc,
+        config,
+        "/torrents/setCategory",
+        &[("hashes", hash), ("category", category)],
+    )
+    .await?;
+    Ok(qbit_submitted(200))
+}
+
+pub(super) async fn tags(svc: &YarrService, config: &ServiceConfig) -> Result<Value> {
+    get(svc, config, "/torrents/tags").await
+}
+
+pub(super) async fn create_tags(
+    svc: &YarrService,
+    config: &ServiceConfig,
+    tags: &str,
+) -> Result<Value> {
+    tags_post(svc, config, "/torrents/createTags", None, tags).await
+}
+
+pub(super) async fn delete_tags(
+    svc: &YarrService,
+    config: &ServiceConfig,
+    tags: &str,
+) -> Result<Value> {
+    tags_post(svc, config, "/torrents/deleteTags", None, tags).await
+}
+
+pub(super) async fn add_tags(
+    svc: &YarrService,
+    config: &ServiceConfig,
+    hash: &str,
+    tags: &str,
+) -> Result<Value> {
+    tags_post(svc, config, "/torrents/addTags", Some(hash), tags).await
+}
+
+pub(super) async fn remove_tags(
+    svc: &YarrService,
+    config: &ServiceConfig,
+    hash: &str,
+    tags: &str,
+) -> Result<Value> {
+    tags_post(svc, config, "/torrents/removeTags", Some(hash), tags).await
+}
+
+async fn get(svc: &YarrService, config: &ServiceConfig, suffix: &str) -> Result<Value> {
+    let path = qbit_path(config, suffix);
+    let url = crate::yarr::build_url(config, &path)?;
+    svc.client_ref().send_get(config, url, None).await
+}
+
+async fn post_form(
+    svc: &YarrService,
+    config: &ServiceConfig,
+    suffix: &str,
+    form: &[(&str, &str)],
+) -> Result<Value> {
+    let path = qbit_path(config, suffix);
+    let url = crate::yarr::build_url(config, &path)?;
+    svc.client_ref().send_form_post(config, url, form).await
+}
+
+async fn tags_post(
+    svc: &YarrService,
+    config: &ServiceConfig,
+    suffix: &str,
+    hash: Option<&str>,
+    tags: &str,
+) -> Result<Value> {
+    let form = match hash {
+        Some(hash) => vec![("hashes", hash), ("tags", tags)],
+        None => vec![("tags", tags)],
+    };
+    post_form(svc, config, suffix, &form).await?;
+    Ok(qbit_submitted(200))
 }
 
 /// POST `/api/v2/torrents/add` (form field `urls`) → add a download by URL/magnet.

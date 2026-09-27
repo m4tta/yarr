@@ -128,3 +128,95 @@ fn plex_queue_is_rejected_wrong_kind() {
         "plex queue should be rejected, got: {msg}"
     );
 }
+
+#[test]
+fn qbittorrent_limits_parse_integer_and_exact_hash() {
+    let cmd = parse_args_from([
+        "qbittorrent",
+        "set-limits",
+        "--hash",
+        "abc123",
+        "--download-limit",
+        "0",
+        "--upload-limit",
+        "4096",
+    ])
+    .unwrap()
+    .unwrap();
+    assert_eq!(
+        cmd,
+        Command::Curated {
+            action: "download_set_limits",
+            params: json!({
+                "service": "qbittorrent",
+                "hash": "abc123",
+                "download_limit": 0,
+                "upload_limit": 4096
+            }),
+        }
+    );
+}
+
+#[test]
+fn qbittorrent_tag_commands_parse_repeated_tags() {
+    let cmd = parse_args_from([
+        "qbittorrent",
+        "add-tags",
+        "--id",
+        "abc123",
+        "--tag",
+        "needs review",
+        "--tag",
+        "4k",
+    ])
+    .unwrap()
+    .unwrap();
+    assert_eq!(
+        cmd,
+        Command::Curated {
+            action: "download_add_tags",
+            params: json!({
+                "service": "qbittorrent",
+                "id": "abc123",
+                "tags": ["needs review", "4k"]
+            }),
+        }
+    );
+}
+
+#[test]
+fn qbittorrent_category_commands_require_expected_flags() {
+    let cmd = parse_args_from([
+        "qbittorrent",
+        "create-category",
+        "--category",
+        "TV/Anime",
+        "--save-path",
+        "/downloads/anime",
+    ])
+    .unwrap()
+    .unwrap();
+    assert_eq!(
+        cmd,
+        Command::Curated {
+            action: "download_create_category",
+            params: json!({
+                "service": "qbittorrent",
+                "category": "TV/Anime",
+                "save_path": "/downloads/anime"
+            }),
+        }
+    );
+    assert!(
+        parse_args_from(["qbittorrent", "set-category", "--category", "TV"])
+            .unwrap_err()
+            .to_string()
+            .contains("--id or --hash")
+    );
+}
+
+#[test]
+fn sabnzbd_rejects_qbittorrent_only_verbs() {
+    let error = parse_args_from(["sabnzbd", "transfer"]).unwrap_err();
+    assert!(error.to_string().contains("only supported for qbittorrent"));
+}

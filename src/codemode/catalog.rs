@@ -15,6 +15,7 @@
 //! four service-agnostic `api.<service>.{get,post,put,delete}` entries.
 
 use serde::Serialize;
+use serde_json::Value;
 
 use crate::actions::{
     CommandDescriptor, READ_SCOPE, WRITE_SCOPE, action_is_destructive, curated_command,
@@ -22,6 +23,47 @@ use crate::actions::{
 };
 use crate::capability::Capability;
 use crate::config::ServiceKind;
+
+#[path = "catalog/multipart.rs"]
+mod multipart;
+use multipart::{
+    CatalogMultipart, metadata as catalog_multipart,
+    request_representation as catalog_request_representation,
+};
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CatalogParameter {
+    name: &'static str,
+    location: &'static str,
+    required: bool,
+    schema: Value,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CatalogRepresentation {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    status: Option<&'static str>,
+    media_type: &'static str,
+    encoding: &'static str,
+    schema: Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    encoding_metadata: Option<Value>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CatalogRequestBody {
+    /// Whether the operation requires a request payload of some kind.
+    required: bool,
+    /// Whether the top-level `body` argument itself is mandatory. Multipart
+    /// file controls can satisfy a required payload without `body`.
+    body_argument_required: bool,
+    representations: Vec<CatalogRepresentation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    multipart: Option<CatalogMultipart>,
+}
 
 /// One catalog row, surfaced to scripts via `codemode.search`/`describe`.
 #[derive(Debug, Clone, Serialize)]
@@ -36,13 +78,22 @@ pub enum CatalogEntry {
         method: &'static str,
         /// `"read"` / `"write"` / `"public"`.
         scope: CatalogScope,
-        /// True only for generated DELETE operations.
+        /// Whether the operation requires destructive-operation confirmation.
         destructive: bool,
         /// OpenAPI tag for generated operations.
         capability: String,
         /// Required params, with the baked-in `service` dropped.
         required_params: Vec<&'static str>,
         description: &'static str,
+        /// Full OpenAPI parameter contracts, surfaced by `codemode.describe`.
+        #[serde(skip_serializing_if = "Vec::is_empty")]
+        parameters: Vec<CatalogParameter>,
+        /// Full request-body media contracts, including requiredness.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        request_body: Option<CatalogRequestBody>,
+        /// Successful response media contracts.
+        #[serde(skip_serializing_if = "Vec::is_empty")]
+        responses: Vec<CatalogRepresentation>,
         /// Request-body component type name, if any.
         #[serde(skip_serializing_if = "Option::is_none")]
         request_type: Option<&'static str>,
@@ -182,34 +233,33 @@ impl CatalogScope {
 /// kind. Generic passthroughs (`api_*`) are NOT here — they live under the separate
 /// `api.<service>` client. `help`/`codemode`/`snippet_*` are not service-scoped.
 pub fn service_action_names(kind: ServiceKind) -> Vec<&'static str> {
-    let cap = kind.capability();
     let mut names = vec!["service_status"];
     names.extend(
         curated_commands()
             .iter()
-            .filter(|cmd| cmd.capability == cap)
+            .filter(|cmd| crate::actions::action_allowed_for_kind(cmd.name, kind))
             .map(|cmd| cmd.name),
     );
     names
 }
 
-/// Build the catalog for the configured services. For spec-backed (generated)
-/// kinds this is one entry per generated operation; for the doc-based kinds it is
-/// `service_status` + the kind's curated commands. Plus four service-agnostic
-/// raw-API client entries.
+/// Build the catalog for the configured services. Every service gets its curated
+/// helpers; spec-backed kinds also get one entry per generated operation. Plus
+/// four service-agnostic raw-API client entries.
 pub fn build_catalog(services: &[(String, ServiceKind)]) -> Vec<CatalogEntry> {
     let mut out: Vec<CatalogEntry> = Vec::new();
     for (name, kind) in services {
+        out.push(service_entry(name, "service_status"));
         if crate::openapi::is_generated(*kind) {
-            // The per-service `service_status` callable is still synthesized.
-            out.push(service_entry(name, "service_status"));
             for op in crate::openapi::operations_for_kind(*kind) {
                 out.push(operation_entry(name, *kind, op));
             }
-        } else {
-            for action in service_action_names(*kind) {
-                out.push(service_entry(name, action));
-            }
+        }
+        for action in service_action_names(*kind)
+            .into_iter()
+            .filter(|action| *action != "service_status")
+        {
+            out.push(service_entry(name, action));
         }
     }
     out.extend(generic_api_entries());
@@ -218,16 +268,23 @@ pub fn build_catalog(services: &[(String, ServiceKind)]) -> Vec<CatalogEntry> {
 
 /// A catalog entry for one generated OpenAPI operation. The callable is
 /// `<service>.<op.name>(args)`; reads (GET/HEAD) are flagged `read`, mutations
-/// `write`, and DELETE ops `destructive` — metadata only, they dispatch
-/// immediately like any other write (see `docs/API.md`). The OpenAPI `tag` is
-/// surfaced as the capability for grouping.
+/// `write`, and operations classified as disruptive or destructive require
+/// confirmation. The OpenAPI `tag` is surfaced as the capability for grouping.
 fn operation_entry(
     service: &str,
     kind: ServiceKind,
     op: &crate::openapi::OperationSpec,
 ) -> CatalogEntry {
-    let mut required: Vec<&'static str> = op.path_params.to_vec();
-    if op.has_body {
+    let mut required = op
+        .parameters
+        .iter()
+        .filter(|parameter| parameter.required)
+        .map(|parameter| parameter.name)
+        .collect::<Vec<_>>();
+    let multipart = (kind == ServiceKind::Qbittorrent)
+        .then(|| op.request_body.and_then(catalog_multipart))
+        .flatten();
+    if op.request_body.is_some_and(|body| body.required) && multipart.is_none() {
         required.push("body");
     }
     let description = if matches!(kind, ServiceKind::Sonarr | ServiceKind::Radarr)
@@ -240,6 +297,48 @@ fn operation_entry(
     } else {
         op.summary
     };
+    // qBittorrent's generated surface includes form/multipart operations whose
+    // call shape cannot be inferred from component type names. Keep its full
+    // wire metadata discoverable without multiplying the established catalogs
+    // for every other generated service in the QuickJS heap.
+    let include_wire_metadata = kind == ServiceKind::Qbittorrent;
+    let (parameters, request_body, responses) = if include_wire_metadata {
+        (
+            op.parameters
+                .iter()
+                .map(|parameter| CatalogParameter {
+                    name: parameter.name,
+                    location: parameter_location(parameter.location),
+                    required: parameter.required,
+                    schema: schema_json(parameter.schema),
+                })
+                .collect(),
+            op.request_body.map(|body| {
+                let body_argument_required = body.required
+                    && multipart.as_ref().is_none_or(|multipart| {
+                        multipart.required_alternatives.is_empty()
+                            || multipart.required_alternatives.iter().all(|alternative| {
+                                alternative.iter().any(|name| name.starts_with("body."))
+                            })
+                    });
+                CatalogRequestBody {
+                    required: body.required,
+                    body_argument_required,
+                    representations: body
+                        .representations
+                        .iter()
+                        .map(|representation| {
+                            catalog_request_representation(representation, multipart.as_ref())
+                        })
+                        .collect(),
+                    multipart,
+                }
+            }),
+            op.responses.iter().map(catalog_representation).collect(),
+        )
+    } else {
+        (Vec::new(), None, Vec::new())
+    };
     CatalogEntry::Operation {
         path: format!("{service}.{}", op.name),
         service: service.to_string(),
@@ -249,13 +348,53 @@ fn operation_entry(
         } else {
             CatalogScope::Write
         },
-        destructive: op.method.is_delete(),
+        destructive: crate::actions::effects::classify_operation(kind, op, None)
+            .requires_confirmation(),
         capability: op.tag.to_string(),
         required_params: required,
         description,
+        parameters,
+        request_body,
+        responses,
         request_type: op.request_type,
         response_type: op.response_type,
     }
+}
+
+fn parameter_location(location: crate::openapi::ParameterLocation) -> &'static str {
+    match location {
+        crate::openapi::ParameterLocation::Path => "path",
+        crate::openapi::ParameterLocation::Query => "query",
+        crate::openapi::ParameterLocation::Header => "header",
+        crate::openapi::ParameterLocation::Cookie => "cookie",
+    }
+}
+
+fn body_encoding(encoding: crate::openapi::BodyEncoding) -> &'static str {
+    match encoding {
+        crate::openapi::BodyEncoding::Json => "json",
+        crate::openapi::BodyEncoding::FormUrlEncoded => "form_urlencoded",
+        crate::openapi::BodyEncoding::Multipart => "multipart",
+        crate::openapi::BodyEncoding::Text => "text",
+        crate::openapi::BodyEncoding::Binary => "binary",
+    }
+}
+
+fn catalog_representation(
+    representation: &crate::openapi::RepresentationSpec,
+) -> CatalogRepresentation {
+    CatalogRepresentation {
+        status: representation.status,
+        media_type: representation.media_type,
+        encoding: body_encoding(representation.encoding),
+        schema: schema_json(representation.schema),
+        encoding_metadata: (!representation.encoding_metadata.is_empty())
+            .then(|| schema_json(representation.encoding_metadata)),
+    }
+}
+
+fn schema_json(schema: &str) -> Value {
+    serde_json::from_str(schema).unwrap_or_else(|_| Value::Object(serde_json::Map::new()))
 }
 
 /// A `<service>.<action>` callable entry.
@@ -325,7 +464,7 @@ fn generic_description(name: &str) -> &'static str {
         "api_post" => "Raw POST passthrough (runs immediately): api.<service>.post(path, body).",
         "api_put" => "Raw PUT passthrough (runs immediately): api.<service>.put(path, body).",
         "api_delete" => {
-            "Raw DELETE passthrough (runs immediately, no confirm): api.<service>.delete(path)."
+            "Raw DELETE passthrough (requires confirmation): api.<service>.delete(path)."
         }
         _ => "",
     }

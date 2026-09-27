@@ -28,8 +28,8 @@ endpoint mappings are rendered from `xtask/src/tool_docs/endpoints.rs`.
 
 There is one published MCP tool (`yarr`). The table below lists the service
 *kinds* a configured service can take — each kind's capability, upstream API
-prefix, and path allowlist (from `ServiceKind::descriptor()`). The 6 spec-backed
-kinds (sonarr/radarr/prowlarr/overseerr/jellyfin/plex) expose supported upstream
+prefix, and path allowlist (from `ServiceKind::descriptor()`). The 7 spec-backed
+kinds (sonarr/radarr/prowlarr/overseerr/jellyfin/plex/qbittorrent) expose supported upstream
 operations as generated operations, with explicit omissions in the matrix below;
 the rest keep curated commands and/or generic passthrough.
 
@@ -81,16 +81,19 @@ scraping prose:
 
 ## Generated Operations (spec-backed services)
 
-`sonarr`, `radarr`, `prowlarr`, `overseerr`, `jellyfin`, and `plex` are generated
-from their vendored OpenAPI specs (`cargo xtask gen-openapi` →
+`sonarr`, `radarr`, `prowlarr`, `overseerr`, `jellyfin`, `plex`, and `qbittorrent` are generated
+from their OpenAPI specs (`cargo xtask gen-openapi` →
 `src/openapi/generated/`). Every supported spec operation becomes a per-service callable
 (`sonarr.get_series()`, `radarr.post_movie({ body })`) dispatched via the `op`
-action; unsupported rows are explicitly omitted below. There are no hand-written
-curated commands for these kinds. Discover them
+action; unsupported rows are explicitly omitted below. qBittorrent uses a locally
+maintained contract audited against pinned upstream source, and also retains its
+curated download helpers. Discover operations
 with `codemode.search(query)` and inspect signatures / response types with
 `codemode.describe(path)`. Direct local CLI scripts use the operator's local
 trust boundary. MCP Code Mode re-authorizes every inner operation and requires
-client elicitation for DELETEs; clients without elicitation support fail closed.
+client elicitation for destructive/disruptive operations, including POST-based
+qBittorrent torrent deletion and application administration; clients without
+elicitation support fail closed.
 
 | Kind | Supported callables | Explicitly omitted operations |
 |---|---:|---|
@@ -98,6 +101,7 @@ client elicitation for DELETEs; clients without elicitation support fail closed.
 | `radarr` | 236 | `get_by_path` (`GET /`): path parameter `path` has no matching placeholder |
 | `prowlarr` | 127 | `get_by_path` (`GET /`): path parameter `path` has no matching placeholder |
 | `overseerr` | 169 | `get_settings_plex_library` (`GET /api/v1/settings/plex/library`): parameter `enable` requires allowReserved serialization |
+| `qbittorrent` | 121 | none |
 | `plex` | 241 | none |
 | `jellyfin` | 346 | none |
 
@@ -129,6 +133,18 @@ Tools: sabnzbd, qbittorrent.
 | `download_pause` | optional `id`, optional `hash` | yarr:write | yes | sabnzbd: one: `GET /api?mode=queue&name=pause&value=<id>&output=json`; all: `GET /api?mode=pause&output=json` | qBittorrent uses form `POST /api/v2/torrents/stop` with `hashes=<hash-or-all>`. Runs immediately. |
 | `download_resume` | optional `id`, optional `hash` | yarr:write | yes | sabnzbd: one: `GET /api?mode=queue&name=resume&value=<id>&output=json`; all: `GET /api?mode=resume&output=json` | qBittorrent uses form `POST /api/v2/torrents/start` with `hashes=<hash-or-all>`. Runs immediately. |
 | `download_remove` | optional `id`, optional `hash`, optional `delete_files` | yarr:write | yes | sabnzbd: `GET /api?mode=queue&name=delete&value=<id>[&del_files=1]&output=json` | qBittorrent uses form `POST /api/v2/torrents/delete` with `hashes=<hash>` and `deleteFiles={true|false}`. Runs immediately; destructive, so MCP elicits the connected client for confirmation before dispatch. |
+| `download_transfer` | none | yarr:read | no | qbittorrent: `GET /api/v2/transfer/info` | Global connection, speeds, totals, and limits. |
+| `download_set_limits` | optional `id`, optional `hash`, optional `download_limit`, optional `upload_limit` | yarr:write | yes | qbittorrent: form `POST /api/v2/transfer/setDownloadLimit` and/or `setUploadLimit` (use the `torrents` group for per-torrent limits) | Integer bytes/second; zero is unlimited. No selector means global; id/hash selects one torrent. Two limits are separate requests. |
+| `download_categories` | none | yarr:read | no | qbittorrent: `GET /api/v2/torrents/categories` |  |
+| `download_create_category` | `category`, optional `save_path` | yarr:write | yes | qbittorrent: form `POST /api/v2/torrents/createCategory` | Category and optional save path. |
+| `download_edit_category` | `category`, `save_path` | yarr:write | yes | qbittorrent: form `POST /api/v2/torrents/editCategory` | Update category save path. |
+| `download_remove_category` | `category` | yarr:write | yes | qbittorrent: form `POST /api/v2/torrents/removeCategories` | Remove one category; does not delete torrents or data. |
+| `download_set_category` | optional `id`, optional `hash`, optional `category` | yarr:write | yes | qbittorrent: form `POST /api/v2/torrents/setCategory` | Assign one torrent; omit category to clear. |
+| `download_tags` | none | yarr:read | no | qbittorrent: `GET /api/v2/torrents/tags` |  |
+| `download_create_tags` | `tags` | yarr:write | yes | qbittorrent: form `POST /api/v2/torrents/createTags` | Accepts an array of individual tag names. |
+| `download_delete_tags` | `tags` | yarr:write | yes | qbittorrent: form `POST /api/v2/torrents/deleteTags` | Delete tag definitions; does not delete torrents or data. |
+| `download_add_tags` | `tags`, optional `id`, optional `hash` | yarr:write | yes | qbittorrent: form `POST /api/v2/torrents/addTags` | Assign tags to one torrent. |
+| `download_remove_tags` | optional `id`, optional `hash`, optional `tags` | yarr:write | yes | qbittorrent: form `POST /api/v2/torrents/removeTags` | Remove selected tags from one torrent; omitted/empty tags clears all its tags. |
 
 ## Bazarr Subtitle Actions
 
@@ -184,7 +200,7 @@ capabilities below have friendly verbs; the spec-backed services use
 
 | Capability | CLI verbs |
 |---|---|
-| DownloadClient | `queue`, `add`, `pause`, `resume`, `remove` |
+| DownloadClient | `queue`, `add`, `pause`, `resume`, `remove`, `transfer`, `set-limits`, `categories`, `create-category`, `edit-category`, `remove-category`, `set-category`, `tags`, `create-tags`, `delete-tags`, `add-tags`, `remove-tags` |
 | Stats | `activity`, `history`, `users`, `libraries`, `refresh-libraries`, `refresh-users`, `delete-image-cache` |
 | Subtitles | `status-info`, `movies`, `episodes`, `wanted-episodes`, `wanted-movies`, `providers`, `languages` |
 | Trace | `health`, `stats`, `today`, `activity`, `streams`, `users`, `violations`, `history`, `terminate-stream` |

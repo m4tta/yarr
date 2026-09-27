@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add qBittorrent's generated WebUI API surface, backed by a maintained OpenAPI contract and reproducible upstream route audit, including preferences, torrent files/trackers/peers, queue management, storage, RSS, search, uploads, and exports.
+- Add qBittorrent convenience controls for transfer status, global/per-torrent speed limits, categories, and tags, with richer queue status and an isolated Docker lab.
 - Add optional bounded Sonarr/Radarr command completion tracking with resumable IDs, explicit terminal outcomes, and no automatic resubmission.
 - Extend the isolated media lab with custom-format CRUD, reversible naming configuration checks, and private real-media import/scan verification using file hashes.
 - Add an isolated Docker media lab for Sonarr, Radarr, and Plex with guarded live CRUD tests, synthetic media scanning, and reproducible result reports. See `tests/media-lab/README.md`.

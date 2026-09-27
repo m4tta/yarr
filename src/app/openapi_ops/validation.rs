@@ -32,6 +32,7 @@ static PROWLARR: OnceLock<CachedValidators> = OnceLock::new();
 static OVERSEERR: OnceLock<CachedValidators> = OnceLock::new();
 static JELLYFIN: OnceLock<CachedValidators> = OnceLock::new();
 static PLEX: OnceLock<CachedValidators> = OnceLock::new();
+static QBITTORRENT: OnceLock<CachedValidators> = OnceLock::new();
 
 pub(super) fn validate_schema(
     kind: ServiceKind,
@@ -168,6 +169,7 @@ fn validators_for(kind: ServiceKind) -> Result<&'static ServiceValidators> {
         ServiceKind::Overseerr => &OVERSEERR,
         ServiceKind::Jellyfin => &JELLYFIN,
         ServiceKind::Plex => &PLEX,
+        ServiceKind::Qbittorrent => &QBITTORRENT,
         _ => bail!("{} has no generated OpenAPI schema", kind.as_str()),
     };
     cache
@@ -192,11 +194,12 @@ fn build_validators(kind: ServiceKind) -> Result<ServiceValidators> {
             index_schema(parameter.schema, &mut definitions, &mut schema_locations)?;
         }
         if let Some(body) = operation.request_body {
-            for representation in body
-                .representations
-                .iter()
-                .filter(|representation| representation.encoding == BodyEncoding::Json)
-            {
+            for representation in body.representations.iter().filter(|representation| {
+                matches!(
+                    representation.encoding,
+                    BodyEncoding::Json | BodyEncoding::FormUrlEncoded | BodyEncoding::Multipart
+                )
+            }) {
                 index_schema(
                     representation.schema,
                     &mut definitions,
@@ -244,6 +247,10 @@ fn parse_vendored_spec(kind: ServiceKind) -> Result<Value> {
         ServiceKind::Overseerr => (include_str!("../../../specs/overseerr.openapi.yml"), true),
         ServiceKind::Jellyfin => (include_str!("../../../specs/jellyfin.openapi.json"), false),
         ServiceKind::Plex => (include_str!("../../../specs/plex.openapi.yml"), true),
+        ServiceKind::Qbittorrent => (
+            include_str!("../../../specs/qbittorrent.openapi.json"),
+            false,
+        ),
         _ => bail!("{} has no vendored OpenAPI document", kind.as_str()),
     };
     if yaml {

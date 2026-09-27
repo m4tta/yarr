@@ -37,6 +37,30 @@ fn per_service_namespaces_bake_in_the_service() {
 }
 
 #[test]
+fn qbittorrent_curated_helpers_are_additive_and_sab_does_not_advertise_them() {
+    let pre = build_preamble(&[
+        ("qbit_movies".to_string(), ServiceKind::Qbittorrent),
+        ("sabnzbd".to_string(), ServiceKind::Sabnzbd),
+    ]);
+    assert!(pre.contains(r#"globalThis["qbit_movies"] = {"#));
+    assert!(pre.contains(r#"["download_set_limits"]: (params) => callTool("download_set_limits""#));
+
+    let sab_start = pre.find(r#"globalThis["sabnzbd"] = {"#).unwrap();
+    let sab_end = pre[sab_start..].find("};\n").unwrap() + sab_start;
+    assert!(!pre[sab_start..sab_end].contains("download_set_limits"));
+}
+
+#[test]
+fn qbittorrent_multipart_controls_are_injected_for_describe_only() {
+    let pre = build_preamble(&[("qbit".to_string(), ServiceKind::Qbittorrent)]);
+    assert!(pre.contains(r#""requiredAlternatives"#));
+    assert!(pre.contains(r#""multipartFileBase64"#));
+    assert!(pre.contains("call.request_body"));
+    // Search still projects a fixed compact result instead of returning schemas.
+    assert!(pre.contains("return { e: { path: e.path, service: e.service"));
+}
+
+#[test]
 fn no_flat_tools_namespace() {
     // The old flat `tools.<action>({service})` surface (the service-param leak) is
     // gone — everything is reached through a per-service callable.

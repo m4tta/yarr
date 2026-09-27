@@ -2,6 +2,7 @@
 
 use super::*;
 use crate::config::ServiceKind;
+use serde_json::json;
 
 fn services() -> Vec<(String, ServiceKind)> {
     vec![
@@ -43,8 +44,7 @@ fn each_entry_carries_its_service() {
     assert!(!series.description().is_empty());
     // `service` is baked in, never a param the script passes.
     assert!(!series.required_params().contains(&"service"));
-    // A DELETE op is flagged destructive (metadata only — Code Mode dispatches
-    // it immediately, same as any other action).
+    // A destructive operation is marked so the MCP layer can require confirmation.
     let del = cat
         .iter()
         .find(|e| e.path() == "sonarr.delete_series_by_id")
@@ -117,4 +117,171 @@ fn empty_services_yields_only_raw_api_docs() {
     // No services configured → only the four service-agnostic raw-API entries.
     assert_eq!(cat.len(), 4);
     assert!(cat.iter().all(|e| e.service().is_none()));
+}
+
+#[test]
+fn qbittorrent_catalog_keeps_curated_helpers_out_of_sabnzbd() {
+    let cat = build_catalog(&[
+        ("qbit_movies".to_string(), ServiceKind::Qbittorrent),
+        ("sabnzbd".to_string(), ServiceKind::Sabnzbd),
+    ]);
+    let paths = cat.iter().map(CatalogEntry::path).collect::<Vec<_>>();
+    assert!(paths.contains(&"qbit_movies.download_set_limits"));
+    assert!(paths.contains(&"qbit_movies.download_tags"));
+    assert!(!paths.contains(&"sabnzbd.download_set_limits"));
+    assert!(!paths.contains(&"sabnzbd.download_tags"));
+}
+
+#[test]
+fn operation_required_params_use_parameter_and_body_requiredness() {
+    let spec = crate::openapi::operations_for_kind(ServiceKind::Sonarr)
+        .iter()
+        .find(|operation| operation.name == "delete_queue_bulk")
+        .unwrap();
+    let entry = operation_entry("sonarr", ServiceKind::Sonarr, spec);
+    let json = serde_json::to_value(&entry).unwrap();
+
+    assert!(
+        json["required_params"]
+            .as_array()
+            .is_some_and(|params| !params.iter().any(|param| param == "body"))
+    );
+
+    let required_query = crate::openapi::operations_for_kind(ServiceKind::Qbittorrent)
+        .iter()
+        .find_map(|operation| {
+            operation
+                .parameters
+                .iter()
+                .find(|parameter| {
+                    parameter.required
+                        && parameter.location == crate::openapi::ParameterLocation::Query
+                })
+                .map(|parameter| (operation, parameter))
+        })
+        .expect("qBittorrent spec should contain a required query parameter");
+    let json = serde_json::to_value(operation_entry(
+        "qbit",
+        ServiceKind::Qbittorrent,
+        required_query.0,
+    ))
+    .unwrap();
+    assert!(
+        json["required_params"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|param| param == required_query.1.name)
+    );
+}
+
+#[test]
+fn qbittorrent_describe_includes_wire_metadata() {
+    let operations = crate::openapi::operations_for_kind(ServiceKind::Qbittorrent);
+    assert!(
+        !operations.is_empty(),
+        "qBittorrent OpenAPI registry is empty"
+    );
+    let operation = operations
+        .iter()
+        .find(|operation| !operation.parameters.is_empty() || operation.request_body.is_some())
+        .expect("qBittorrent operation with inputs");
+    let json =
+        serde_json::to_value(operation_entry("qbit", ServiceKind::Qbittorrent, operation)).unwrap();
+    if !operation.parameters.is_empty() {
+        let parameters = json["parameters"].as_array().unwrap();
+        assert_eq!(parameters.len(), operation.parameters.len());
+        assert!(parameters.iter().all(|parameter| {
+            parameter["name"].is_string()
+                && parameter["location"].is_string()
+                && parameter["required"].is_boolean()
+                && parameter["schema"].is_object()
+        }));
+    }
+    if let Some(body) = operation.request_body {
+        assert_eq!(json["request_body"]["required"], body.required);
+        assert_eq!(
+            json["request_body"]["representations"]
+                .as_array()
+                .unwrap()
+                .len(),
+            body.representations.len()
+        );
+    }
+}
+
+#[test]
+fn qbittorrent_multipart_describe_uses_real_top_level_file_controls() {
+    let operations = crate::openapi::operations_for_kind(ServiceKind::Qbittorrent);
+    let describe = |path| {
+        let operation = operations
+            .iter()
+            .find(|operation| operation.path == path)
+            .unwrap();
+        serde_json::to_value(operation_entry("qbit", ServiceKind::Qbittorrent, operation)).unwrap()
+    };
+
+    let add = describe("/api/v2/torrents/add");
+    assert!(
+        !add["required_params"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("body"))
+    );
+    let body = &add["request_body"];
+    assert_eq!(body["required"], true);
+    assert_eq!(body["bodyArgumentRequired"], false);
+    assert_eq!(
+        body["multipart"]["requiredAlternatives"],
+        json!([["body.urls"], ["multipartFileBase64"]])
+    );
+    assert_eq!(
+        body["multipart"]["fileFields"],
+        json!([{"name":"torrents","mediaType":"application/x-bittorrent"}])
+    );
+    let controls = body["multipart"]["controls"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|control| control["name"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        controls,
+        [
+            "multipartFileBase64",
+            "fileName",
+            "multipartField",
+            "contentType"
+        ]
+    );
+    let add_schema = &body["representations"][0]["schema"];
+    assert!(add_schema["properties"].get("torrents").is_none());
+    assert!(add_schema["properties"].get("urls").is_some());
+    assert_eq!(add_schema["anyOf"], json!([{"required":["urls"]}]));
+
+    let parsed = describe("/api/v2/torrents/parseMetadata");
+    assert!(
+        !parsed["required_params"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("body"))
+    );
+    assert_eq!(
+        parsed["request_body"]["multipart"]["requiredAlternatives"],
+        json!([["multipartFileBase64"]])
+    );
+    assert!(
+        parsed["request_body"]["representations"][0]["schema"]["properties"]
+            .get("torrent")
+            .is_none()
+    );
+}
+
+#[test]
+fn disruptive_post_is_marked_for_confirmation_in_catalog() {
+    let shutdown = crate::openapi::operations_for_kind(ServiceKind::Qbittorrent)
+        .iter()
+        .find(|operation| operation.path == "/api/v2/app/shutdown")
+        .expect("qBittorrent shutdown operation");
+    assert!(operation_entry("qbit", ServiceKind::Qbittorrent, shutdown).destructive());
 }
