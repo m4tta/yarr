@@ -1,15 +1,23 @@
 //! Engine harness tests — drive `run` directly with a mock tool caller (no tokio,
 //! no real services).
 
-use std::time::{Duration, Instant};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use super::{ArtifactWriter, EmbedCaller, EngineLimits, ToolCaller, run};
-use crate::codemode::build_preamble;
+use crate::codemode::{CODEMODE_MEMORY_LIMIT, CODEMODE_STACK_LIMIT, build_preamble};
+use crate::config::ServiceKind;
 
 fn limits(ttl: Duration) -> EngineLimits {
+    limits_with_memory(ttl, CODEMODE_MEMORY_LIMIT)
+}
+
+fn limits_with_memory(ttl: Duration, memory_bytes: usize) -> EngineLimits {
     EngineLimits {
-        memory_bytes: 64 * 1024 * 1024,
-        stack_bytes: 512 * 1024,
+        memory_bytes,
+        stack_bytes: CODEMODE_STACK_LIMIT,
         deadline: Instant::now() + ttl,
     }
 }
@@ -189,14 +197,14 @@ fn infinite_loop_is_interrupted_by_deadline() {
 
 #[test]
 fn memory_limit_is_enforced() {
-    // The 64 MiB QuickJS heap cap (EngineLimits.memory_bytes, set via
-    // `rt.set_memory_limit`) surfaces as an engine error when a script allocates
-    // well past it. The deadline is generous so MEMORY — not time — trips it.
+    // A deliberately small test budget proves `rt.set_memory_limit` is active
+    // independently of the production heap size. The deadline is generous so
+    // memory — not time — trips it.
     let code = r#"async () => { const s = "x".repeat(100 * 1024 * 1024); return s.length; }"#;
     let err = run(
         code,
         &build_preamble(&[]),
-        &limits(Duration::from_secs(10)),
+        &limits_with_memory(Duration::from_secs(10), 64 * 1024 * 1024),
         echo_caller(),
         no_write(),
         no_embed(),
@@ -211,6 +219,119 @@ fn memory_limit_is_enforced() {
         !err.contains("timed out"),
         "expected a memory error, not a timeout: {err}"
     );
+}
+
+#[test]
+fn large_structured_tool_result_can_be_summarized_within_current_heap() {
+    const ROW_COUNT: usize = 2_000;
+    const ROW_BYTES: usize = 6_000;
+
+    // Model a large movie library with many scalar and nested fields. Keeping
+    // the payload structured matters: one giant string does not reproduce the
+    // QuickJS object-graph overhead of a real generated API response.
+    let mut row = serde_json::json!({
+        "id": 1,
+        "title": "Synthetic Movie",
+        "originalTitle": "Synthetic Original Title",
+        "sortTitle": "synthetic movie",
+        "status": "released",
+        "overview": "synthetic overview ".repeat(40),
+        "inCinemas": "2026-01-01T00:00:00Z",
+        "digitalRelease": "2026-02-01T00:00:00Z",
+        "physicalRelease": "2026-03-01T00:00:00Z",
+        "year": 2026,
+        "runtime": 123,
+        "monitored": true,
+        "hasFile": true,
+        "qualityProfileId": 1,
+        "path": "/synthetic/library/movie",
+        "rootFolderPath": "/synthetic/library",
+        "genres": ["Adventure", "Comedy", "Drama", "Science Fiction"],
+        "tags": [1, 2, 3, 4],
+        "ratings": {
+            "imdb": {"votes": 12345, "value": 7.5, "type": "user"},
+            "tmdb": {"votes": 6789, "value": 7.2, "type": "user"},
+            "rottenTomatoes": {"votes": 456, "value": 82, "type": "critic"}
+        },
+        "alternateTitles": (0..12).map(|n| serde_json::json!({
+            "sourceType": 0, "movieMetadataId": 1, "title": format!("Synthetic Alternate {n}")
+        })).collect::<Vec<_>>(),
+        "images": (0..10).map(|n| serde_json::json!({
+            "coverType": "poster",
+            "url": format!("/synthetic/image/{n}.jpg"),
+            "remoteUrl": format!("https://invalid.example/image/{n}.jpg")
+        })).collect::<Vec<_>>(),
+        "collection": {
+            "title": "Synthetic Collection",
+            "tmdbId": 999,
+            "images": [{"coverType": "poster", "url": "/synthetic/collection.jpg"}]
+        },
+        "movieFile": {
+            "id": 1,
+            "relativePath": "Synthetic.Movie.mkv",
+            "path": "/synthetic/library/movie/Synthetic.Movie.mkv",
+            "size": 1234567890_u64,
+            "dateAdded": "2026-01-01T00:00:00Z",
+            "quality": {"quality": {"id": 7, "name": "Synthetic", "source": "web"}, "revision": {"version": 1}},
+            "languages": [{"id": 1, "name": "English"}],
+            "mediaInfo": {
+                "audioBitrate": 384000,
+                "audioChannels": 6.0,
+                "audioCodec": "Synthetic Audio",
+                "audioLanguages": "eng",
+                "audioStreamCount": 1,
+                "videoBitDepth": 10,
+                "videoBitrate": 8000000,
+                "videoCodec": "Synthetic Video",
+                "videoDynamicRange": "Synthetic Range",
+                "videoFps": 24.0,
+                "resolution": "1920x1080",
+                "runTime": "02:03:00",
+                "scanType": "Progressive",
+                "subtitles": "eng",
+                "videoStreamCount": 1
+            }
+        },
+        "syntheticPadding": ""
+    });
+    let base_row = serde_json::to_string(&row).unwrap();
+    assert!(base_row.len() < ROW_BYTES);
+    row["syntheticPadding"] = serde_json::Value::String("x".repeat(ROW_BYTES - base_row.len()));
+    let row = serde_json::to_string(&row).unwrap();
+    assert_eq!(row.len(), ROW_BYTES);
+
+    let mut payload = String::with_capacity(2 + ROW_COUNT * (ROW_BYTES + 1));
+    payload.push('[');
+    for index in 0..ROW_COUNT {
+        if index != 0 {
+            payload.push(',');
+        }
+        payload.push_str(&row);
+    }
+    payload.push(']');
+    assert!((12_000_000..12_500_000).contains(&payload.len()));
+    let payload: Arc<str> = payload.into();
+    let caller = |payload: Arc<str>| -> ToolCaller {
+        Box::new(move |_id, _params| Ok(payload.as_ref().to_owned()))
+    };
+    let code = r#"async () => (await callTool("large_library", {})).length"#;
+    let services = ServiceKind::ALL
+        .into_iter()
+        .map(|kind| (kind.as_str().to_owned(), kind))
+        .collect::<Vec<_>>();
+    let preamble = build_preamble(&services);
+
+    let out = run(
+        code,
+        &preamble,
+        &limits(Duration::from_secs(10)),
+        caller(payload),
+        no_write(),
+        no_embed(),
+        None,
+    )
+    .unwrap();
+    assert_eq!(out.result, serde_json::json!(ROW_COUNT));
 }
 
 #[test]

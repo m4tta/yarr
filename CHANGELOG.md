@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Increase the bounded Code Mode heap to support summarizing large media libraries while retaining existing response-size, concurrency, and execution-time limits.
 - Correct Plex library creation's generated endpoint, media-type parameter, location parameter, and success response against a live Plex server.
 - Validate generated OpenAPI parameters and JSON request bodies before sending requests, with local schema references, nullable fields, and masked field errors.
 - Apply one semantic effect policy to flat MCP and Code Mode calls, including disruptive POST/PUT operations and destructive Plex trash and Servarr restore operations.

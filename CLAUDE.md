@@ -74,7 +74,7 @@ Run a JS async arrow fn that calls yarr actions — port of lab's gateway Code M
 
 | File | Role |
 |------|------|
-| `src/codemode.rs` | Facade + limits (admission/deadline, 64 MiB heap, stack, per-run/global artifact quotas and retention, code/snippet sizes) |
+| `src/codemode.rs` | Facade + limits (admission/deadline, 128 MiB heap, stack, per-run/global artifact quotas and retention, code/snippet sizes) |
 | `src/codemode/engine.rs` | rquickjs harness: register `__yarrEmitToolCall` + `__yarrEmitWriteArtifact` + `__yarrEmbedQuery`, bind `input` JSON, eval preamble + wrapped user code, drain microtasks (outside `ctx.with`), read back `{result, logs}`. Opaque `ToolCaller`/`ArtifactWriter`/`EmbedCaller` (`Box<dyn Fn>`); pure of tokio/domain |
 | `src/codemode/proxy.rs` | Cached preamble builder — `callTool`, `console`, `__yarrRun`, per-service generated/curated callables, `api.<service>`, and discovery/snippet helpers |
 | `src/codemode/semantic.rs` | `SemanticCache` (catalog-embedding cache + failure cooldown) and `semantic_scores(cache, tei_url, catalog, query)` — the TEI HTTP client + cosine-similarity ranking behind `codemode.search`'s blend. Fails open, always |

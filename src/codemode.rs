@@ -47,8 +47,8 @@ pub const CODEMODE_TIMEOUT: Duration = Duration::from_secs(30);
 pub const CODEMODE_MAX_CONCURRENT: usize = 4;
 /// Maximum time a Code Mode request waits for an execution slot.
 pub const CODEMODE_QUEUE_TIMEOUT: Duration = Duration::from_millis(500);
-/// QuickJS heap cap (matches lab's 64 MiB).
-pub const CODEMODE_MEMORY_LIMIT: usize = 64 * 1024 * 1024;
+/// Bounded QuickJS heap, including bridge JSON strings and parsed library objects.
+pub const CODEMODE_MEMORY_LIMIT: usize = 128 * 1024 * 1024;
 /// QuickJS native stack cap.
 pub const CODEMODE_STACK_LIMIT: usize = 512 * 1024;
 /// Maximum accepted user-code size, so an oversized payload is rejected before it
