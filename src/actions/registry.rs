@@ -59,7 +59,7 @@ pub const ACTION_SPECS: &[ActionSpec] = &[
     },
     ActionSpec {
         name: "api_delete",
-        description: "Run an allowlisted DELETE after the transport's destructive gate.",
+        description: "Run an allowlisted DELETE against a configured service; destructive.",
         required_scope: Some(WRITE_SCOPE),
         transport: ActionTransport::Any,
         required_params: &["service", "path"],
