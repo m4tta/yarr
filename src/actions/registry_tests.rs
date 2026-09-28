@@ -226,8 +226,7 @@ fn required_params_mirror_parser_contract() {
         vec!["service", "path"]
     );
     // The write passthroughs (including the destructive api_delete) run
-    // immediately with no confirm param — on MCP, api_delete additionally
-    // gets an elicitation prompt before dispatch.
+    // immediately with no confirm param.
     assert_eq!(
         required_params_for_action("api_post"),
         vec!["service", "path"]

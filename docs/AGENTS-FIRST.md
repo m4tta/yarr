@@ -90,7 +90,7 @@ Agents may use:
 
 yarr ships **MCP and CLI only** — there is no local REST action API and no embedded web UI.
 
-The action metadata in `src/actions.rs` keeps these surfaces aligned. Every action that the MCP tool exposes must also be reachable from the CLI (with the exception of MCP-only features like elicitation).
+The action metadata in `src/actions.rs` keeps these surfaces aligned. Every action that the MCP tool exposes must also be reachable from the CLI.
 
 ## Summarize by default, expand on request
 

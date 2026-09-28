@@ -77,9 +77,8 @@ async fn per_service_callable_bakes_in_the_service() {
 
 #[tokio::test]
 async fn codemode_allows_destructive_actions_to_dispatch() {
-    // api_delete is destructive, but Code Mode has no confirmation channel
-    // mid-script, so it just dispatches immediately like any other action —
-    // failing only at the network layer (unreachable stub).
+    // api_delete is destructive and dispatches immediately like any other
+    // authorized action, failing only at the network layer (unreachable stub).
     let service = loopback_state().service;
     let code = r#"
         async () => {

@@ -20,7 +20,7 @@ use rmcp::{
         ReadResourceResponse, ReadResourceResult, Resource, ResourceContents, ServerCapabilities,
         ServerInfo, Tool,
     },
-    service::{Peer, RequestContext},
+    service::RequestContext,
 };
 use serde_json::{Map, Value};
 
@@ -31,7 +31,7 @@ use crate::{
 
 use crate::server::{AppState, AuthPolicy};
 
-use super::{elicit, prompts, schemas::tool_definitions, tools::execute_tool};
+use super::{prompts, schemas::tool_definitions, tools::execute_tool};
 
 // ── server ────────────────────────────────────────────────────────────────────
 
@@ -48,10 +48,8 @@ pub fn rmcp_server(state: AppState) -> YarrRmcpServer {
 /// S5: `TrustedGatewayUnscoped` disables auth middleware *and* bypasses scope
 /// checks entirely (see `require_auth_context`). When mutating actions are
 /// registered, emit a one-time startup warning so operators know writes are not
-/// scope-gated in this mode. Note that plain writes (and destructive deletes)
-/// run with no per-call scope gate at all in this mode — elicitation is a UX
-/// confirmation, not an authz boundary — so the gateway is the sole authz
-/// boundary for writes.
+/// scope-gated in this mode. Plain writes and destructive deletes run with no
+/// per-call scope gate, so the gateway is the sole authz boundary for writes.
 fn warn_if_unscoped_with_mutations(state: &AppState) {
     if !matches!(state.auth_policy, AuthPolicy::TrustedGatewayUnscoped) {
         return;
@@ -118,31 +116,10 @@ impl ServerHandler for YarrRmcpServer {
             .map(Value::Object)
             .unwrap_or_else(|| Value::Object(Map::new()));
 
-        // Clone the peer for client interaction (elicitation) and the dispatcher
-        // signature.
-        let peer: Peer<RoleServer> = context.peer.clone();
-
-        // High-impact gate (MCP-only). The shared operation policy resolves
-        // generated and passthrough semantics, including non-DELETE operations
-        // such as Plex empty-trash and Servarr restores.
-        let effect = operation_effect_for_tool_call(&self.state, &tool_name, &action, &arguments)?;
-        if effect.requires_confirmation()
-            && elicit::gate_operation(&peer, &action, &tool_name, effect).await
-                == elicit::OperationGate::Declined
-        {
-            tracing::info!(
-                tool = %tool_name,
-                action = %action,
-                ?effect,
-                "high-impact action declined via elicitation; nothing changed"
-            );
-            return declined_result(&action).map(Into::into);
-        }
-
         let started = Instant::now();
         tracing::info!(tool = %tool_name, action = %action, "MCP tool execution started");
 
-        match execute_tool(&self.state, &tool_name, arguments, &peer, auth.cloned()).await {
+        match execute_tool(&self.state, &tool_name, arguments, auth.cloned()).await {
             Ok(result) => {
                 tracing::info!(
                     tool = %tool_name,

@@ -185,9 +185,11 @@ auth, regardless of policy. `/ready` exposes only the configured-service count,
 `/status` returns redacted local metadata, and `/metrics` must be protected at
 the network or reverse-proxy layer if it is not intended for public scraping.
 
-Static bearer tokens receive the scopes in `YARR_MCP_STATIC_TOKEN_SCOPES`; the default remains `yarr:read`. `yarr:write` must be granted explicitly and still does not bypass destructive confirmation. Destructive MCP calls require elicitation at
-the point of dispatch, including nested calls made by Code Mode; clients that
-cannot elicit are denied rather than allowed through.
+Static bearer tokens receive the scopes in `YARR_MCP_STATIC_TOKEN_SCOPES`; the
+default remains `yarr:read`. `yarr:write` must be granted explicitly. Once
+transport authentication, scope checks, and input validation succeed, actions
+execute immediately, including destructive actions and calls nested in Code
+Mode. Clients are responsible for resolving user intent before dispatch.
 
 ---
 

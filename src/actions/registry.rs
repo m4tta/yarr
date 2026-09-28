@@ -81,7 +81,7 @@ pub const ACTION_SPECS: &[ActionSpec] = &[
     // surface, not a casual REST passthrough; the CLI reaches it via the infra
     // verb path). Requires write scope since the script can perform writes,
     // including destructive deletes. Direct CLI runs use the local trust
-    // boundary; MCP runs install an inner-action scope/elicitation guard.
+    // boundary; MCP runs reauthorize each inner action before immediate dispatch.
     ActionSpec {
         name: "codemode",
         description: "Run a bounded JavaScript orchestration script.",
@@ -96,10 +96,8 @@ pub const ACTION_SPECS: &[ActionSpec] = &[
     // only (the agent reaches it via the generated `<service>.<op>()` callables);
     // requires write scope since an op may mutate. Generated DELETE ops dispatch
     // through the local CLI trust boundary; MCP Code Mode and flat calls apply
-    // the same inner/outer destructive elicitation policy. Reached directly via
-    // `call_tool` (e.g. flat tool mode), a
-    // destructive op gets the same MCP elicitation prompt as any other
-    // high-impact action — see `actions::operation_effect`.
+    // the same inner/outer authorization policy. Effect classification remains
+    // informative metadata — see `actions::operation_effect`.
     ActionSpec {
         name: "op",
         description: "Dispatch a generated OpenAPI operation. Sonarr/Radarr post_command args may include waitForCompletion with bounded timeoutSeconds and pollIntervalMs controls.",
@@ -266,9 +264,8 @@ pub struct CommandDescriptor {
     ///
     /// `destructive` is metadata only — nothing in the app layer refuses to run
     /// a destructive action, and there is no `confirm` parameter anywhere. On
-    /// the MCP surface, `destructive` drives an elicitation prompt
-    /// (`src/mcp/elicit.rs::gate_operation`) before dispatch, including inner
-    /// Code Mode calls. Direct CLI execution retains its local trust boundary.
+    /// either surface, the flag is informative and does not gate dispatch,
+    /// including for inner Code Mode calls.
     /// The flag also drives schema/help annotations and is the SSOT for
     /// [`action_is_destructive`].
     pub destructive: bool,

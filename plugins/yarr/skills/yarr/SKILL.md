@@ -35,7 +35,7 @@ and `callTool`. Discover what's available with `codemode.search`/`codemode.descr
   `sonarr.get_series()`, `radarr.post_movie({ body })`, `prowlarr.get_indexer()`,
   `plex.get_sessions()`, … For the 7 spec-backed services these are generated from
   the upstream OpenAPI spec (the full API surface), including DELETE ops — see
-  Gotcha 3 below for the MCP confirmation boundary.
+  Gotcha 3 below for the MCP execution boundary.
   qBittorrent uses a locally maintained contract audited against 5.2.3 source,
   plus `download_*` convenience calls. Use exact configured names for multiple
   instances (for example `qbit_movies` and `qbit_tv`). Its generated writes use
@@ -186,11 +186,12 @@ async () => ({
    dispatches arbitrary upstream requests, so all of it is write-gated to prevent
    credential leakage via crafted paths. Your MCP token must have write scope.
 
-3. **There is no caller-supplied confirm parameter.** Direct trusted CLI writes
-   run immediately. On MCP, every inner Code Mode call is independently
-   reauthorized, and destructive deletes (DELETE ops, `api_delete`, curated
-   deletes like `download_remove`) require a real interactive elicitation prompt.
-   Missing elicitation capability, cancellation, timeout, or refusal fails closed.
+3. **There is no caller-supplied confirm parameter or MCP confirmation prompt.**
+   After transport authentication, scope checks, and input validation, actions
+   run immediately, including destructive DELETE operations and calls nested in
+   Code Mode. Treat the user's explicit instruction as authorization. If the
+   request is ambiguous, clarify it before calling Yarr. The `destructive` flag
+   is informative metadata for planning and review; it does not gate execution.
 
 4. **Never include credentials in `path`.** Configured service credentials live in
    server environment variables; the server injects auth automatically. Do not

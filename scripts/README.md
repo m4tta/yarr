@@ -16,6 +16,7 @@ Maintenance and automation scripts for the template. Shell scripts are written f
 | `check-doc-links.py` | Validate every tracked Markdown relative link and heading anchor. |
 | `check-dependency-updates.sh` | Report lockfile-compatible and latest dependency updates. |
 | `check-file-size.sh` | Pre-commit source file size budget. |
+| `check-mcp-dispatch.py` | Verify immediate stdio dispatch and input validation against an owned loopback fake, without production config or media. |
 | `check-plugin-hook-contract.py` | Audit the binary-owned `setup plugin-hook` JSON contract across Rust MCP servers. |
 | `check-qbittorrent-openapi.py` | Compare the local qBittorrent contract and coverage inventory with pinned 5.2.3 upstream controller routes and parameters. |
 | `check-runtime-current.sh` | Detect stale Docker/systemd runtimes. |
@@ -48,6 +49,21 @@ Maintenance and automation scripts for the template. Shell scripts are written f
 ---
 
 ## Script reference
+
+### `check-mcp-dispatch.py`
+
+```bash
+cargo build --bin yarr
+python3 scripts/check-mcp-dispatch.py --binary target/debug/yarr
+```
+
+Starts the real binary with a temporary home, isolated configuration, synthetic
+credentials, and a loopback fake qBittorrent server. Six cases cover generated
+operations with and without form capability, a curated removal, flat-mode
+dispatch, and invalid input. No case may emit a confirmation request. Valid
+requests reach the fake endpoint exactly once with `deleteFiles=false`; invalid
+inputs never reach it. HTTP authentication and scope enforcement are covered by
+the Rust integration tests. No production services are contacted.
 
 ### `check-qbittorrent-openapi.py`
 
@@ -175,7 +191,7 @@ just schema-docs
 just schema-docs-check
 ```
 
-Treats the action registry as canonical and verifies schema docs, help text, README, and plugin skill mentions. Generated output lives in `docs/MCP_SCHEMA.md` and preserves its required title and created/updated frontmatter. Since the descriptor-table refactor, `ACTION_SPECS` lives in `src/actions/registry.rs` (with `src/actions.rs` a thin facade), so the checker scans the `src/actions/` tree recursively rather than the single `src/actions.rs` file. The required-params contract is `service`/`path` for the generic passthroughs: there is no `confirm` param anywhere, and the destructive `api_delete` runs immediately on the CLI/Code Mode — on MCP it's instead gated out-of-band via elicitation (not via a required schema param).
+Treats the action registry as canonical and verifies schema docs, help text, README, and plugin skill mentions. Generated output lives in `docs/MCP_SCHEMA.md` and preserves its required title and created/updated frontmatter. Since the descriptor-table refactor, `ACTION_SPECS` lives in `src/actions/registry.rs` (with `src/actions.rs` a thin facade), so the checker scans the `src/actions/` tree recursively rather than the single `src/actions.rs` file. The required-params contract is `service`/`path` for the generic passthroughs: there is no `confirm` param or MCP confirmation prompt, and `api_delete` runs immediately after authorization and validation. Its destructive flag remains informative metadata.
 
 ### `build-web.sh`
 

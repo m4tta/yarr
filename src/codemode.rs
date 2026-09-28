@@ -17,8 +17,7 @@
 //!     JS runtime is needed.
 //!   * **Safety.** Memory and stack are capped, and a wall-clock deadline aborts
 //!     runaway scripts via a QuickJS interrupt handler. MCP requests reauthorize
-//!     every inner action and fail closed if a destructive call cannot elicit
-//!     confirmation from the connected peer.
+//!     every inner action before immediate dispatch.
 //!
 //! Module layout:
 //!   [`engine`] — the rquickjs execution harness (pure; takes an opaque tool

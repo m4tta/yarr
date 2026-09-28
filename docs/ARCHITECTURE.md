@@ -46,7 +46,7 @@ and upstream-specific behavior belong in `src/app*`, `src/actions*`, and
 | Business logic | `src/app.rs`, `src/app/{openapi_ops,download,stats,subtitles,trace,codemode}.rs` | Operation execution and curated behavior |
 | Upstream transport | `src/yarr.rs`, `src/yarr/{auth,helpers}.rs` | HTTP, credentials, qBittorrent sessions, URL/response handling |
 | CLI | `src/cli.rs`, `src/cli/` | Service-grouped commands plus doctor, setup, watch, snippets, Code Mode |
-| MCP | `src/mcp.rs`, `src/mcp/` | Tool schemas, scopes, elicitation, prompts/resources, transports |
+| MCP | `src/mcp.rs`, `src/mcp/` | Tool schemas, scopes, prompts/resources, transports |
 | HTTP host | `src/server.rs`, `src/server/routes.rs` | Auth policy, routing, probes, metrics, CORS/body limits |
 | Code Mode | `src/codemode.rs`, `src/codemode/` | QuickJS sandbox, catalog, proxies, snippets, artifacts, truncation |
 | OpenAPI metadata | `src/openapi.rs`, `src/openapi/generated/` | Generated operation/type tables and lookup |
@@ -94,10 +94,10 @@ and mounted bearer/OAuth auth. Static HTTP bearer tokens receive the configured
 requires an explicit `yarr:write` grant. OAuth tokens carry issued scopes. Stdio
 is a local trusted transport.
 
-MCP destructive actions require elicitation immediately before dispatch,
-including calls nested inside Code Mode. A peer without elicitation support is
-denied. CLI destructive commands have no interactive confirmation layer and run
-immediately.
+After transport authentication, scope checks, and input validation, MCP and CLI
+actions execute immediately, including destructive actions and calls nested in
+Code Mode. Destructive and disruptive classifications remain informative
+metadata for clients and operators; they do not gate dispatch.
 
 ## Invariants
 

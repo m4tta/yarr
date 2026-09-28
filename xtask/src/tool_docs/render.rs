@@ -56,7 +56,7 @@ pub(super) fn generic_endpoint(action: &str) -> &'static str {
         "api_post" => "`POST {path}` with JSON body. Runs immediately.",
         "api_put" => "`PUT {path}` with JSON body. Runs immediately.",
         "api_delete" => {
-            "`DELETE {path}` with optional JSON body. Runs immediately; destructive, so MCP elicits the connected client for confirmation before dispatch."
+            "`DELETE {path}` with optional JSON body. Runs immediately after authorization and validation; destructive metadata is informative."
         }
         "help" => "No upstream call; returns registry-derived action help.",
         "codemode" => {

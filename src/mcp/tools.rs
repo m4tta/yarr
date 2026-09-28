@@ -3,7 +3,6 @@
 use std::sync::Arc;
 
 use lab_auth::AuthContext;
-use rmcp::{RoleServer, service::Peer};
 use serde_json::{Map, Value};
 
 use crate::actions::{YarrAction, execute_service_action, required_scope_for_action};
@@ -16,7 +15,6 @@ pub(super) async fn execute_tool(
     state: &AppState,
     name: &str,
     args: Value,
-    peer: &Peer<RoleServer>,
     auth: Option<AuthContext>,
 ) -> anyhow::Result<Value> {
     let guarded_script = name == YARR_TOOL_NAME
@@ -25,11 +23,7 @@ pub(super) async fn execute_tool(
             .and_then(Value::as_str)
             .is_some_and(|action| matches!(action, "codemode" | "snippet_run"));
     if guarded_script {
-        let guard = Arc::new(McpCodeModeGuard {
-            state: state.clone(),
-            peer: peer.clone(),
-            auth,
-        });
+        let guard = Arc::new(McpCodeModeScopeGuard { auth });
         return dispatch_script_with_guard(state, name, args, guard).await;
     }
     dispatch_tool(state, name, args).await
@@ -102,13 +96,11 @@ async fn dispatch_script_with_guard(
     }
 }
 
-struct McpCodeModeGuard {
-    state: AppState,
-    peer: Peer<RoleServer>,
+struct McpCodeModeScopeGuard {
     auth: Option<AuthContext>,
 }
 
-impl CodeModeCallGuard for McpCodeModeGuard {
+impl CodeModeCallGuard for McpCodeModeScopeGuard {
     fn authorize<'a>(
         &'a self,
         action: &'a YarrAction,
@@ -124,26 +116,6 @@ impl CodeModeCallGuard for McpCodeModeGuard {
                 ));
             }
 
-            let effect = crate::actions::operation_effect(&self.state.service, action)
-                .map_err(|error| error.to_string())?;
-            if !effect.requires_confirmation() {
-                return Ok(());
-            }
-            let service_name = action.target_service().unwrap_or(YARR_TOOL_NAME);
-            if self.peer.supported_elicitation_modes().is_empty() {
-                return Err(format!(
-                    "high-impact inner Code Mode action `{}` requires an elicitation-capable MCP client; nothing changed",
-                    action.name()
-                ));
-            }
-            if super::elicit::gate_operation(&self.peer, action.name(), service_name, effect).await
-                == super::elicit::OperationGate::Declined
-            {
-                return Err(format!(
-                    "high-impact inner Code Mode action `{}` was not confirmed; nothing changed",
-                    action.name()
-                ));
-            }
             Ok(())
         })
     }

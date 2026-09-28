@@ -12,6 +12,11 @@ Result: 2 live checks recorded in `target/live-full/report.json`; 1 passed, 1 fa
 
 Scope note: the "service API endpoint" column lists the endpoint families Yarr allowlists and the concrete upstream endpoints Yarr's curated actions use. It is not a complete inventory of every endpoint exposed by the upstream products.
 
+Legacy check names containing `confirmed` or `unconfirmed` identify probe
+variants retained in historical live reports; they do not describe a current
+MCP confirmation prompt. Current MCP calls execute immediately after
+authentication, scope checks, and input validation.
+
 ## Sonarr
 
 | Service API endpoint | Yarr implementation | Live test |

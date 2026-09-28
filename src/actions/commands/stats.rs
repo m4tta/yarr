@@ -13,9 +13,8 @@
 //! (`activity`/`history`/`users`/`libraries`) onto them.
 //!
 //! Read commands are `yarr:read`; maintenance commands mutate Tautulli state
-//! and are `yarr:write`. Only `stats_delete_image_cache` is *destructive* — on
-//! MCP it gets an elicitation prompt before dispatch; it runs immediately like
-//! the refresh commands on the CLI and in Code Mode. Handlers
+//! and are `yarr:write`. Only `stats_delete_image_cache` carries destructive
+//! metadata; it runs immediately like the refresh commands on CLI and MCP. Handlers
 //! are THIN adapters — extract params and call the corresponding
 //! `YarrService` method. No business logic here; the cmd/envelope/slim logic
 //! lives in `crate::app::stats`.
@@ -116,8 +115,8 @@ pub const STATS_COMMANDS: &[CommandDescriptor] = &[
     CommandDescriptor {
         name: "stats_delete_image_cache",
         capability: Capability::Stats,
-        description: "clear Tautulli's regenerable image cache. DESTRUCTIVE — on MCP \
-             the connected client is elicited for confirmation before this runs.",
+        description: "clear Tautulli's regenerable image cache. Runs immediately after \
+             authorization and validation; DESTRUCTIVE metadata is informative.",
         required_scope: WRITE_SCOPE,
         required_params: &["service"],
         optional_params: &[],

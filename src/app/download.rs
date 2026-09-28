@@ -13,9 +13,8 @@
 //!
 //! Scope split (locked in the bead): `queue` is READ; `add`, `pause`, `resume`,
 //! and `remove` mutate, so they are WRITE. Only `remove` is *destructive* (it
-//! deletes a download, optionally its data) — on the MCP surface that means
-//! `rmcp_server.rs` elicits the connected client before dispatch reaches here;
-//! the CLI and Code Mode run it immediately, same as any other write.
+//! deletes a download, optionally its data). That classification is informative;
+//! CLI, MCP, and Code Mode run it immediately after authorization and validation.
 //! `remove` defaults `delete_files` to `false` (opt-in via `--delete-files` /
 //! `delete_files=true`).
 //!
@@ -183,8 +182,8 @@ impl YarrService {
         qbit::remove_tags(self, self.qbit_context(service)?, &target, &tags).await
     }
 
-    /// Add a download by URL/magnet. Mutating but not destructive — runs
-    /// immediately, no confirm gate.
+    /// Add a download by URL/magnet. Mutating but not destructive; runs
+    /// immediately after authorization and validation.
     pub async fn download_add(&self, service: &str, url: &str) -> Result<Value> {
         let config = self.download_context(service)?;
         if config.kind.descriptor().query_api() {
@@ -195,7 +194,7 @@ impl YarrService {
     }
 
     /// Pause downloads (all, or a specific id/hash). Mutating but not
-    /// destructive — runs immediately, no confirm gate.
+    /// destructive; runs immediately after authorization and validation.
     pub async fn download_pause(&self, service: &str, id: Option<&str>) -> Result<Value> {
         let config = self.download_context(service)?;
         if config.kind.descriptor().query_api() {
@@ -206,7 +205,7 @@ impl YarrService {
     }
 
     /// Resume downloads (all, or a specific id/hash). Mutating but not
-    /// destructive — runs immediately, no confirm gate.
+    /// destructive; runs immediately after authorization and validation.
     pub async fn download_resume(&self, service: &str, id: Option<&str>) -> Result<Value> {
         let config = self.download_context(service)?;
         if config.kind.descriptor().query_api() {
@@ -217,8 +216,8 @@ impl YarrService {
     }
 
     /// Remove a download. `delete_files` (default false) also deletes the
-    /// downloaded data. DESTRUCTIVE — on MCP the connected client is elicited
-    /// for confirmation before dispatch reaches here.
+    /// downloaded data. Carries informative destructive metadata and runs
+    /// immediately after authorization and validation.
     pub async fn download_remove(
         &self,
         service: &str,

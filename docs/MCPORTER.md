@@ -52,15 +52,15 @@ cargo xtask live --suite all         # everything above + rest/services
 }
 ```
 
-The live suites start a local Yarr MCP server against `/home/jmagar/.yarr-backuphost/.env` and build/use `target/debug/yarr` by default so they test the current checkout; set `YARR_BIN=/path/to/yarr` only when intentionally testing a specific binary. They must not target production service credentials. Backuphost is a disposable fake stack, so confirmed media-stack writes/removes/deletes are expected live coverage.
+The live suites start a local Yarr MCP server against `/home/jmagar/.yarr-backuphost/.env` and build/use `target/debug/yarr` by default so they test the current checkout; set `YARR_BIN=/path/to/yarr` only when intentionally testing a specific binary. They must not target production service credentials. Backuphost is a disposable fake stack, so explicitly enabled media-stack writes/removes/deletes are expected live coverage.
 
 ## What the live suites validate
 
 - **`mcp`** — `tools/list` advertises exactly the single `yarr` tool (no per-service tools); `initialize`, `resources/read` (the schema resource), and `prompts/get quick_start` succeed; a representative `yarr` Code Mode round-trip reaches an upstream service and returns real status fields; a write to a bad path surfaces the service-native error through the Code Mode envelope.
 - **`mcporter`** — starts a local no-auth Yarr MCP server against `/home/jmagar/.yarr-backuphost`, then uses `mcporter call --http-url http://127.0.0.1:40170/mcp --allow-http yarr` to execute every generated callable for sonarr/radarr/prowlarr/overseerr/jellyfin/plex through Code Mode. It reuses the contract suite's generated input synthesis, create-first ID seeding, and schema validation. Endpoints that rewrite config/auth state or stop services run in an isolated reset phase when the service has a backuphost ZFS golden (`backup/lab/live/golden/<service>@configured-v1`); the harness rolls the dataset back before and after the group. Non-JSON endpoints, optional-feature endpoints, and resource-ID endpoints without seeded IDs are still invoked using deterministic fallback inputs and are recorded as ok/schema-mismatch/rejected instead of skipped.
 - **`contract`** — drives *every* generated OpenAPI operation for the 6 spec-backed services via the CLI `op` action, with create-first seeding and schema-validated responses. Destructive DELETEs run immediately, like every other op; pass `--no-destructive` to skip them for this suite run.
-- **`cli`** — service-grouped CLI reads (`yarr <service> status`/`get`), per-service `service_status`, matrix-backed `api_get` expectations, and an unconfirmed `api_post` upstream-error probe per service. All writes, including destructive deletes, run immediately.
-- **`lifecycles`** — confirmed stateful write lifecycles for the doc-based services (no generated ops): SABnzbd / qBittorrent `download_*` add/pause/resume/remove (against an in-process fixture NZB / a test magnet, with queue-state polling), Tautulli `stats_*` maintenance (refresh-libraries/refresh-users/delete-image-cache), and Bazarr / Tracearr seeded `api_delete` cleanup (rows seeded over `ssh backuphost docker exec`, deleted, then verified gone). Destructive — skipped under `--no-destructive`. SABnzbd needs `YARR_LIVE_FIXTURE_HOST` reachable from backuphost (default the devhost tailnet IP).
+- **`cli`** — service-grouped CLI reads (`yarr <service> status`/`get`), per-service `service_status`, matrix-backed `api_get` expectations, and an `api_post` upstream-error probe per service. All writes, including destructive deletes, run immediately.
+- **`lifecycles`** — explicitly enabled stateful write lifecycles for the doc-based services (no generated ops): SABnzbd / qBittorrent `download_*` add/pause/resume/remove (against an in-process fixture NZB / a test magnet, with queue-state polling), Tautulli `stats_*` maintenance (refresh-libraries/refresh-users/delete-image-cache), and Bazarr / Tracearr seeded `api_delete` cleanup (rows seeded over `ssh backuphost docker exec`, deleted, then verified gone). Destructive — skipped under `--no-destructive`. SABnzbd needs `YARR_LIVE_FIXTURE_HOST` reachable from backuphost (default the devhost tailnet IP).
 - Seeded-content assertions prove the test stack is not merely returning empty success: Prowlarr exposes the `Yarr Live LinuxTracker` indexer, Plex/Jellyfin expose `Yarr Live Movies` / `Yarr Fixture Movie`, and Tautulli returns that library.
 - "Destructive" means permanent loss of data that cannot be quickly and easily regenerated or recreated with minimal effort. Ordinary media-stack writes such as removing a test torrent, deleting re-downloadable media, clearing OAuth tokens, stopping containers, killing restartable processes, or toggling gateway state are mutating, but not destructive under this project vocabulary.
 
@@ -101,7 +101,7 @@ mcporter call --http-url http://127.0.0.1:40170/mcp --allow-http --tool yarr --a
 cargo xtask live --suite mcp
 ```
 
-A test that checks `is_error: false` is not a good test — it only verifies the MCP protocol layer responded. Semantic tests check that the actual service data is present, structurally correct, and changed as expected for confirmed writes.
+A test that checks `is_error: false` is not a good test — it only verifies the MCP protocol layer responded. Semantic tests check that the actual service data is present, structurally correct, and changed as expected for write calls.
 
 ## Tool validation helpers
 

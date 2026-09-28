@@ -14,8 +14,8 @@ Owner: `@jmagar`
 - OAuth discovery/authorization failures.
 - Any `yarr_auth_token_issuance_total{outcome="rate_limited"}` increase or
   repeated HTTP 429 response from `POST /token`.
-- A destructive call is denied because the peer cannot elicit or approval was
-  declined.
+- A valid call is denied by transport authentication or its required action
+  scope.
 
 ## Triage
 
@@ -23,8 +23,9 @@ Owner: `@jmagar`
    `yarr doctor --json`.
 2. Verify `/health`, `/ready`, and `/status`; these routes are public and do not
    prove MCP authentication.
-3. Check whether the client is using a static token or OAuth. Static tokens are
-   read-only; write/destructive calls require an OAuth token with `yarr:write`.
+3. Check whether the client is using a static token or OAuth. Write and
+   destructive calls require `yarr:write`; static bearer scopes come from
+   `YARR_MCP_STATIC_TOKEN_SCOPES` and default to read-only.
 4. If OAuth is active, verify `YARR_MCP_PUBLIC_URL` is the exact external HTTPS
    origin and has no path credentials, query, or fragment.
 5. If `disable_static_token_with_oauth = true`, do not expect
@@ -42,14 +43,14 @@ Owner: `@jmagar`
 
 - Correct the client credential/scope or OAuth callback configuration.
 - Rotate a suspected static token and update clients atomically.
-- Keep destructive dispatch fail-closed; do not bypass elicitation to restore
-  service.
+- Restore only the credentials and scopes intended for the client. Do not widen
+  authorization merely to clear an unrelated failure.
 - Preserve the in-process token cap. Add or tighten reverse-proxy per-client
   throttling, then investigate the caller before relaxing any external limit.
-- Re-run the authenticated MCP smoke test and one approved destructive test on
-  a disposable target if destructive behavior changed.
+- Re-run the authenticated MCP smoke test and one explicitly authorized
+  destructive test on a disposable target if destructive behavior changed.
 
 ## Escalation evidence
 
 Record the release digest/version, auth mode, public URL with secrets removed,
-HTTP status, scope requested, client elicitation capability, and timestamps.
+HTTP status, scope requested, and timestamps.

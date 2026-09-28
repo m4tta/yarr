@@ -58,7 +58,7 @@ scraping prose:
 |---|---|---|
 | `x-yarr-action-metadata` | `ACTION_SPECS` + `curated_commands()` | Per-action scope, params, mutability, destructive flag, capability, and allowed service kinds. |
 | `x-yarr-service-metadata` | `ServiceKind::descriptor()` | Per-kind capability, auth style, API prefix, resource noun, and path allowlist. |
-| `x-yarr-agent-guidance` | schema generator | Preferred first-pass reads, generic passthrough guidance, the elicitation model for destructive deletes, and response-shaping hints. |
+| `x-yarr-agent-guidance` | schema generator | Preferred first-pass reads, generic passthrough guidance, the immediate-execution model, and response-shaping hints. |
 | `properties.*.x-yarr-actions` | curated command descriptors | Lists which curated actions consume a lifted top-level param. |
 
 
@@ -70,7 +70,7 @@ scraping prose:
 | `api_get` | `path` | yarr:write | no | `GET {path}`. |
 | `api_post` | `path`, optional `body` | yarr:write | yes | `POST {path}` with JSON body. Runs immediately. |
 | `api_put` | `path`, optional `body` | yarr:write | yes | `PUT {path}` with JSON body. Runs immediately. |
-| `api_delete` | `path`, optional `body` | yarr:write | yes | `DELETE {path}` with optional JSON body. Runs immediately; destructive, so MCP elicits the connected client for confirmation before dispatch. |
+| `api_delete` | `path`, optional `body` | yarr:write | yes | `DELETE {path}` with optional JSON body. Runs immediately after authorization and validation; destructive metadata is informative. |
 | `help` | none | public | no | No upstream call; returns registry-derived action help. |
 | `codemode` | `code` | yarr:write | yes | No direct upstream call; runs a Code Mode script that dispatches other actions. |
 | `op` | `op`, optional `args` | yarr:write | yes | Dispatches a generated OpenAPI operation for a spec-backed service. |
@@ -89,11 +89,10 @@ action; unsupported rows are explicitly omitted below. qBittorrent uses a locall
 maintained contract audited against pinned upstream source, and also retains its
 curated download helpers. Discover operations
 with `codemode.search(query)` and inspect signatures / response types with
-`codemode.describe(path)`. Direct local CLI scripts use the operator's local
-trust boundary. MCP Code Mode re-authorizes every inner operation and requires
-client elicitation for destructive/disruptive operations, including POST-based
-qBittorrent torrent deletion and application administration; clients without
-elicitation support fail closed.
+`codemode.describe(path)`. MCP Code Mode re-authorizes every inner operation;
+after scope checks and input validation, operations run immediately, including
+destructive and disruptive operations. Those effect labels are informative
+metadata for planning and review and do not gate execution.
 
 | Kind | Supported callables | Explicitly omitted operations |
 |---|---:|---|
@@ -120,7 +119,7 @@ Tools: tautulli.
 | `stats_libraries` | none | yarr:read | no | tautulli: `GET /api/v2?cmd=get_library_names` |  |
 | `stats_refresh_libraries` | none | yarr:write | yes | tautulli: `GET /api/v2?cmd=refresh_libraries_list` | Runs immediately (not destructive). |
 | `stats_refresh_users` | none | yarr:write | yes | tautulli: `GET /api/v2?cmd=refresh_users_list` | Runs immediately (not destructive). |
-| `stats_delete_image_cache` | none | yarr:write | yes | tautulli: `GET /api/v2?cmd=delete_image_cache` | Runs immediately; destructive, so MCP elicits the connected client for confirmation before dispatch. |
+| `stats_delete_image_cache` | none | yarr:write | yes | tautulli: `GET /api/v2?cmd=delete_image_cache` | Runs immediately after authorization and validation; destructive metadata is informative. |
 
 ## SABnzbd And qBittorrent Actions
 
@@ -132,7 +131,7 @@ Tools: sabnzbd, qbittorrent.
 | `download_add` | `url` | yarr:write | yes | sabnzbd: `GET /api?mode=addurl&name=<url>&output=json` | qBittorrent uses form `POST /api/v2/torrents/add` with `urls=<url>`. Runs immediately. |
 | `download_pause` | optional `id`, optional `hash` | yarr:write | yes | sabnzbd: one: `GET /api?mode=queue&name=pause&value=<id>&output=json`; all: `GET /api?mode=pause&output=json` | qBittorrent uses form `POST /api/v2/torrents/stop` with `hashes=<hash-or-all>`. Runs immediately. |
 | `download_resume` | optional `id`, optional `hash` | yarr:write | yes | sabnzbd: one: `GET /api?mode=queue&name=resume&value=<id>&output=json`; all: `GET /api?mode=resume&output=json` | qBittorrent uses form `POST /api/v2/torrents/start` with `hashes=<hash-or-all>`. Runs immediately. |
-| `download_remove` | optional `id`, optional `hash`, optional `delete_files` | yarr:write | yes | sabnzbd: `GET /api?mode=queue&name=delete&value=<id>[&del_files=1]&output=json` | qBittorrent uses form `POST /api/v2/torrents/delete` with `hashes=<hash>` and `deleteFiles={true|false}`. Runs immediately; destructive, so MCP elicits the connected client for confirmation before dispatch. |
+| `download_remove` | optional `id`, optional `hash`, optional `delete_files` | yarr:write | yes | sabnzbd: `GET /api?mode=queue&name=delete&value=<id>[&del_files=1]&output=json` | qBittorrent uses form `POST /api/v2/torrents/delete` with `hashes=<hash>` and `deleteFiles={true|false}`. Runs immediately after authorization and validation; destructive metadata is informative. |
 | `download_transfer` | none | yarr:read | no | qbittorrent: `GET /api/v2/transfer/info` | Global connection, speeds, totals, and limits. |
 | `download_set_limits` | optional `id`, optional `hash`, optional `download_limit`, optional `upload_limit` | yarr:write | yes | qbittorrent: form `POST /api/v2/transfer/setDownloadLimit` and/or `setUploadLimit` (use the `torrents` group for per-torrent limits) | Integer bytes/second; zero is unlimited. No selector means global; id/hash selects one torrent. Two limits are separate requests. |
 | `download_categories` | none | yarr:read | no | qbittorrent: `GET /api/v2/torrents/categories` |  |
@@ -174,7 +173,7 @@ Tools: tracearr.
 | `trace_users` | optional `page`, optional `page_size` | yarr:read | no | tracearr: `GET /api/v1/public/users[?page=&pageSize=]` |  |
 | `trace_violations` | optional `page`, optional `page_size` | yarr:read | no | tracearr: `GET /api/v1/public/violations[?page=&pageSize=]` |  |
 | `trace_history` | optional `page`, optional `page_size` | yarr:read | no | tracearr: `GET /api/v1/public/history[?page=&pageSize=]` |  |
-| `trace_terminate_stream` | `id`, optional `reason` | yarr:write | yes | tracearr: `POST /api/v1/public/streams/{id}/terminate` | Optional JSON `reason`; destructive, so MCP elicits the connected client for confirmation before dispatch. |
+| `trace_terminate_stream` | `id`, optional `reason` | yarr:write | yes | tracearr: `POST /api/v1/public/streams/{id}/terminate` | Optional JSON `reason`; runs immediately after authorization and validation, with informative destructive metadata. |
 
 ## Additional Generic Passthrough Families
 

@@ -84,36 +84,6 @@ pub(super) fn tool_result_from_json(value: Value) -> Result<CallToolResult, Erro
     Ok(CallToolResult::success(vec![ContentBlock::text(text)]))
 }
 
-/// Parse the effective action exactly as dispatch will see it, then apply the
-/// shared domain effect policy. Flat tools bake the configured service identity
-/// into the call; the single `yarr` tool remains service-less Code Mode.
-pub(super) fn operation_effect_for_tool_call(
-    state: &AppState,
-    tool_name: &str,
-    action: &str,
-    arguments: &Value,
-) -> Result<crate::actions::OperationEffect, ErrorData> {
-    let mut params = arguments.as_object().cloned().unwrap_or_default();
-    params.insert("action".to_owned(), Value::String(action.to_owned()));
-    if tool_name != crate::mcp::schemas::YARR_TOOL_NAME {
-        params.insert("service".to_owned(), Value::String(tool_name.to_owned()));
-    }
-    let parsed = crate::actions::YarrAction::from_mcp_args(&Value::Object(params))
-        .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
-    crate::actions::operation_effect(&state.service, &parsed)
-        .map_err(|error| ErrorData::invalid_params(error.to_string(), None))
-}
-
-/// Result returned when a high-impact action is declined at the elicitation
-/// prompt: a structured success payload (nothing was changed), not an error.
-pub(super) fn declined_result(action: &str) -> Result<CallToolResult, ErrorData> {
-    tool_result_from_json(serde_json::json!({
-        "declined": true,
-        "action": action,
-        "note": "high-impact action not confirmed; nothing was changed",
-    }))
-}
-
 pub(super) fn reject_unknown_action_before_scope(action: &str) -> Result<(), ErrorData> {
     if is_known_action(action) {
         return Ok(());

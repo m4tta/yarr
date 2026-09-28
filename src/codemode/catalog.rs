@@ -78,7 +78,7 @@ pub enum CatalogEntry {
         method: &'static str,
         /// `"read"` / `"write"` / `"public"`.
         scope: CatalogScope,
-        /// Whether the operation requires destructive-operation confirmation.
+        /// Whether the operation is classified as high impact.
         destructive: bool,
         /// OpenAPI tag for generated operations.
         capability: String,
@@ -268,8 +268,8 @@ pub fn build_catalog(services: &[(String, ServiceKind)]) -> Vec<CatalogEntry> {
 
 /// A catalog entry for one generated OpenAPI operation. The callable is
 /// `<service>.<op.name>(args)`; reads (GET/HEAD) are flagged `read`, mutations
-/// `write`, and operations classified as disruptive or destructive require
-/// confirmation. The OpenAPI `tag` is surfaced as the capability for grouping.
+/// `write`, and disruptive or destructive operations are flagged `destructive`.
+/// The OpenAPI `tag` is surfaced as the capability for grouping.
 fn operation_entry(
     service: &str,
     kind: ServiceKind,
@@ -348,8 +348,7 @@ fn operation_entry(
         } else {
             CatalogScope::Write
         },
-        destructive: crate::actions::effects::classify_operation(kind, op, None)
-            .requires_confirmation(),
+        destructive: crate::actions::effects::classify_operation(kind, op, None).is_high_impact(),
         capability: op.tag.to_string(),
         required_params: required,
         description,
@@ -463,9 +462,7 @@ fn generic_description(name: &str) -> &'static str {
         "api_get" => "Raw GET passthrough: api.<service>.get(path).",
         "api_post" => "Raw POST passthrough (runs immediately): api.<service>.post(path, body).",
         "api_put" => "Raw PUT passthrough (runs immediately): api.<service>.put(path, body).",
-        "api_delete" => {
-            "Raw DELETE passthrough (requires confirmation): api.<service>.delete(path)."
-        }
+        "api_delete" => "Raw DELETE passthrough (destructive): api.<service>.delete(path).",
         _ => "",
     }
 }

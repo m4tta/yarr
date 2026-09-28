@@ -156,7 +156,7 @@ def render() -> str:
             "- `api_get` conditionally requires non-empty `path`.",
             "- `api_post` conditionally requires non-empty `path`; `body` defaults to `{}`. Non-destructive; runs immediately.",
             "- `api_put` conditionally requires non-empty `path`; `body` defaults to `{}`. Non-destructive; runs immediately.",
-            "- `api_delete` conditionally requires non-empty `path`; `body` is optional (query params go in `path`). Destructive: gated by MCP elicitation only (no bypass); the CLI has no elicitation channel and runs it immediately. Not a required schema param.",
+            "- `api_delete` conditionally requires non-empty `path`; `body` is optional (query params go in `path`). Destructive metadata is informative; after authorization and validation it runs immediately on CLI and MCP. Not a required schema param.",
             "- Unknown top-level parameters are rejected by the schema.",
             "",
         ]
@@ -208,9 +208,9 @@ def check_scope(actions: list[str]) -> list[str]:
             "src/mcp/schemas/conditionals.rs must remove service requirements for service-named tools"
         )
     # The required-params data lives in registry.rs (generic_required_params).
-    # There is no `confirm` param anywhere — plain writes and the destructive
-    # api_delete all run immediately; on MCP, api_delete additionally gets an
-    # elicitation prompt before dispatch (src/mcp/elicit.rs).
+    # There is no `confirm` param or MCP confirmation prompt. Plain writes and
+    # destructive api_delete calls run immediately after authorization and
+    # validation; the destructive flag remains informative metadata.
     registry_text = read_actions_tree()
     if '"service", "path"' not in registry_text:
         failures.append(

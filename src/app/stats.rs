@@ -17,9 +17,9 @@
 //!      the fields agents need (AN-6 context budget).
 //!
 //! Read commands slim bulky analytics payloads. Write commands expose useful
-//! Tautulli maintenance operations; all of them (including the destructive
-//! `stats_delete_image_cache`) run immediately — on MCP, `rmcp_server.rs`
-//! elicits the connected client for confirmation before dispatch reaches here.
+//! Tautulli maintenance operations; all of them (including the action carrying
+//! destructive metadata, `stats_delete_image_cache`) run immediately after
+//! authorization and validation.
 
 use anyhow::Result;
 use serde_json::{Value, json};
@@ -192,8 +192,8 @@ impl YarrService {
     }
 
     /// GET `?cmd=refresh_libraries_list` asks Tautulli to refresh its Plex
-    /// library list. Mutating but not destructive (a refresh, not a delete) —
-    /// runs immediately, no confirm gate.
+    /// library list. Mutating but not destructive (a refresh, not a delete);
+    /// runs immediately after authorization and validation.
     pub async fn stats_refresh_libraries(&self, service: &str) -> Result<Value> {
         let config = self.stats_context(service)?;
         let data = self
@@ -203,7 +203,8 @@ impl YarrService {
     }
 
     /// GET `?cmd=refresh_users_list` asks Tautulli to refresh its Plex user list.
-    /// Mutating but not destructive — runs immediately, no confirm gate.
+    /// Mutating but not destructive; runs immediately after authorization and
+    /// validation.
     pub async fn stats_refresh_users(&self, service: &str) -> Result<Value> {
         let config = self.stats_context(service)?;
         let data = self.stats_cmd(config, "refresh_users_list", &[]).await?;
@@ -211,8 +212,8 @@ impl YarrService {
     }
 
     /// GET `?cmd=delete_image_cache` clears Tautulli's regenerable image cache.
-    /// DESTRUCTIVE — on MCP the connected client is elicited for confirmation
-    /// before dispatch reaches here.
+    /// Carries informative destructive metadata and runs immediately after
+    /// authorization and validation.
     pub async fn stats_delete_image_cache(&self, service: &str) -> Result<Value> {
         let config = self.stats_context(service)?;
         let data = self.stats_cmd(config, "delete_image_cache", &[]).await?;

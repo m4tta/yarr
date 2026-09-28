@@ -64,8 +64,7 @@ fn read_commands_are_read_scope_and_non_mutating() {
 #[test]
 fn write_commands_are_write_scope_mutating_and_only_delete_is_destructive() {
     // All maintenance writes use WRITE scope and mutate; only
-    // `stats_delete_image_cache` is DESTRUCTIVE (MCP elicits confirmation for
-    // it). All of them run immediately.
+    // `stats_delete_image_cache` is DESTRUCTIVE. All of them run immediately.
     for cmd in STATS_COMMANDS
         .iter()
         .filter(|cmd| WRITE_COMMANDS.contains(&cmd.name))

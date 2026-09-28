@@ -44,7 +44,7 @@ fn each_entry_carries_its_service() {
     assert!(!series.description().is_empty());
     // `service` is baked in, never a param the script passes.
     assert!(!series.required_params().contains(&"service"));
-    // A destructive operation is marked so the MCP layer can require confirmation.
+    // A destructive operation remains marked in the catalog metadata.
     let del = cat
         .iter()
         .find(|e| e.path() == "sonarr.delete_series_by_id")
@@ -278,7 +278,7 @@ fn qbittorrent_multipart_describe_uses_real_top_level_file_controls() {
 }
 
 #[test]
-fn disruptive_post_is_marked_for_confirmation_in_catalog() {
+fn disruptive_post_is_marked_high_impact_in_catalog() {
     let shutdown = crate::openapi::operations_for_kind(ServiceKind::Qbittorrent)
         .iter()
         .find(|operation| operation.path == "/api/v2/app/shutdown")

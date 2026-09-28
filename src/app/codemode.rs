@@ -4,9 +4,8 @@
 //! action dispatch. The engine runs on a blocking thread; each `callTool` becomes
 //! a [`ToolRequest`] sent over a channel to the async loop here, which dispatches
 //! it through the shared [`crate::actions::execute_service_action`] path and sends the result
-//! back. MCP callers install a guard that reauthorizes every inner action and
-//! requires fail-closed elicitation for destructive calls; direct trusted CLI
-//! execution has no peer elicitation channel.
+//! back. MCP callers install a guard that reauthorizes every inner action; valid
+//! calls dispatch immediately after scope and input validation.
 
 use std::pin::Pin;
 use std::sync::Mutex;

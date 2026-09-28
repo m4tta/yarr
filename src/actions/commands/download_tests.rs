@@ -81,8 +81,7 @@ fn queue_is_read_scope_and_non_mutating() {
 #[test]
 fn write_commands_are_write_scope_mutate_and_only_remove_is_destructive() {
     // All writes use WRITE scope and mutate; only `download_remove` is
-    // DESTRUCTIVE (MCP elicits confirmation for it). All of them run
-    // immediately.
+    // DESTRUCTIVE. All of them run immediately.
     for cmd in DOWNLOAD_COMMANDS
         .iter()
         .filter(|c| WRITE_COMMANDS.contains(&c.name))

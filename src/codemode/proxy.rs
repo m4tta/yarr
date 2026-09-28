@@ -239,7 +239,7 @@ globalThis.codemode.run = (name, input) =>
 /// helpers that are thin sugar over the generic `api_*` passthrough actions
 /// (`api.sonarr.get("/series")` → `callTool("api_get", {service:"sonarr", path})`).
 /// `delete` resolves to `api_delete`. MCP executions reauthorize the inner call
-/// and require elicitation; direct trusted CLI executions have no peer channel.
+/// and dispatch it immediately after scope and input validation.
 fn render_api_namespace(service_names: &[String]) -> String {
     let mut out = String::from("globalThis.api = {};\n");
     for name in service_names {

@@ -155,8 +155,8 @@ fn schema_exposes_registry_derived_action_metadata() {
     assert_eq!(api_post["destructive"], false);
     assert_eq!(api_post["required_params"], serde_json::json!(["path"]));
 
-    // api_delete IS destructive (destructive = true) — on MCP the connected
-    // client is elicited for confirmation before it dispatches.
+    // api_delete retains informative destructive metadata and dispatches
+    // immediately after authorization and validation.
     let api_delete = metadata
         .iter()
         .find(|entry| entry["name"] == "api_delete")
@@ -187,7 +187,11 @@ fn schema_exposes_service_metadata_and_agent_guidance() {
         guidance["write_guard"]["model"]
             .as_str()
             .unwrap()
-            .contains("elicit")
+            .contains("does not ask for additional confirmation")
+    );
+    assert_eq!(
+        guidance["write_guard"]["effect_metadata"],
+        "x-yarr-action-metadata[*].destructive is informative and does not gate execution"
     );
     assert_eq!(
         guidance["generic_passthrough"]["write"],

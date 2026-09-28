@@ -59,11 +59,11 @@ dispatch arguments are:
 | `path` | string | action-dependent | Relative upstream API path for the generic passthrough actions |
 | `body` | object | no | JSON body forwarded upstream for `api_post`/`api_put`; defaults to `{}` |
 
-There is no `confirm` parameter. CLI destructive actions run immediately. On
-the MCP surface, direct and nested Code Mode destructive calls require an
-elicitation-capable peer and explicit approval; unsupported, declined, or
-missing elicitation fails closed. A script cannot bypass that decision by
-calling `callTool` or an operation callable.
+There is no `confirm` parameter or MCP confirmation prompt. After transport
+authentication, action scope checks, and input validation, calls execute
+immediately on CLI and MCP, including `callTool` and operation calls nested in
+Code Mode. Clients and agents must treat explicit user instructions as
+authorization and clarify ambiguous requests before calling Yarr.
 
 Generated operations are dispatched via the `op` action (`{action:"op", service, op, args}`); inside Code Mode they are the per-service callables above. The action set is **registry-derived** — run the `help` action (or `yarr help`) for the current full list and per-action params.
 
@@ -147,11 +147,9 @@ yarr tautulli activity
 yarr codemode --code 'async () => sonarr.get_system_status()'
 ```
 
-`api_post`/`api_put`/`api_delete` all run immediately on the CLI (no `--confirm`
-flag exists). MCP direct and Code Mode-nested destructive calls elicit before
-dispatch and fail closed without approval. CLI ↔ MCP registration parity is
-mechanically enforced by `tests/parity.rs`; transport-specific confirmation is
-intentionally different.
+`api_post`/`api_put`/`api_delete` all run immediately after authorization and
+validation on both CLI and MCP; no `--confirm` flag exists. CLI ↔ MCP
+registration parity is mechanically enforced by `tests/parity.rs`.
 
 ## qBittorrent controls
 
@@ -206,8 +204,8 @@ Changing a category or its save path can affect where qBittorrent stores files.
 The additional transfer, limit, category, and tag commands are qBittorrent-only;
 the shared queue/add/pause/resume/remove commands also support SABnzbd.
 
-Torrent deletion remains destructive even when preserving data: MCP requires
-confirmation, and `delete_files` defaults to false. qBittorrent often returns
+Torrent deletion remains marked destructive even when preserving data, and
+`delete_files` defaults to false. qBittorrent often returns
 an empty successful response for writes, including when a hash does not exist;
 read back the queue or corresponding setting to verify the intended change.
 
@@ -247,11 +245,10 @@ the service API. Route coverage is distinct from live validation: the isolated
 [qBittorrent lab](../tests/qbit-lab/README.md) tests representative operations
 against a real server; it does not exercise every preference or search plugin.
 
-MCP confirmation covers destructive and disruptive actions, including torrent
-deletion, automatic-removal share limits, shutdown, API-key changes, application
-preferences, and plugin installation/update.
-Normal download controls execute directly. Generated calls use the same effect
-policy as other MCP entry points.
+MCP catalog metadata marks high-impact operations, including torrent deletion,
+shutdown, API-key changes, application preferences, and plugin installation/update.
+These labels are informative and do not gate execution or exhaustively describe
+request-dependent effects, such as automatic-removal share limits.
 
 ## Security Rules
 

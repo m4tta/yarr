@@ -71,8 +71,8 @@ pub const TRACE_COMMANDS: &[CommandDescriptor] = &[
     CommandDescriptor {
         name: "trace_terminate_stream",
         capability: Capability::Trace,
-        description: "terminate an active Tracearr stream by --id. DESTRUCTIVE — on MCP \
-             the connected client is elicited for confirmation before this runs.",
+        description: "terminate an active Tracearr stream by --id. Runs immediately after \
+             authorization and validation; DESTRUCTIVE metadata is informative.",
         required_scope: WRITE_SCOPE,
         required_params: &["service", "id"],
         optional_params: &["reason"],

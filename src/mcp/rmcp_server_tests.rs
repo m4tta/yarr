@@ -10,9 +10,8 @@ use crate::{
 };
 
 use super::{
-    declined_result, effective_action, internal_tool_error_message, operation_effect_for_tool_call,
-    reject_unknown_action_before_scope, rmcp_tool_definitions_for_service, scope_satisfied,
-    tool_error_result, tool_result_from_json,
+    effective_action, internal_tool_error_message, reject_unknown_action_before_scope,
+    rmcp_tool_definitions_for_service, scope_satisfied, tool_error_result, tool_result_from_json,
 };
 
 fn sonarr_only_state() -> AppState {

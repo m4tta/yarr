@@ -99,11 +99,12 @@ excluded with explicit reasons in the runtime-derived capability matrix. See
 
 ## Destructive-test policy
 
-Destructive MCP production calls require elicitation. Live lifecycle tests are
-different: they operate only on the disposable guarded stack and must establish
-their own reset/cleanup contract. Use `--no-destructive` when a suite supports
-skipping mutation. Never point the live harness at production service URLs or
-the normal `~/.yarr` data directory.
+Production MCP calls execute immediately after authentication, scope checks,
+and input validation, including destructive calls. Live lifecycle tests operate
+only on the disposable guarded stack and require explicit suite-level operator
+opt-in plus their own reset/cleanup contract. Use `--no-destructive` when a suite
+supports skipping mutation. Never point the live harness at production service
+URLs or the normal `~/.yarr` data directory.
 
 ## Assertions
 

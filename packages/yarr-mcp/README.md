@@ -330,9 +330,10 @@ These actions work for every configured service kind:
 | `snippet_run` | `yarr:write` | `yarr snippet run` / `codemode.run(name, input)` | Run a saved snippet |
 | `snippet_delete` | `yarr:write` | `yarr snippet delete` | Delete a saved snippet |
 
-There is no `confirm` argument. CLI destructive commands dispatch immediately.
-MCP direct and nested Code Mode destructive calls require elicitation and fail
-closed if the peer cannot elicit or approval is not granted.
+There is no `confirm` argument. After transport authentication, scope checks,
+and input validation, CLI and MCP actions dispatch immediately, including calls
+nested inside Code Mode. MCP clients and agents must treat explicit user
+instructions as authorization and clarify ambiguous requests before calling Yarr.
 
 ## CLI Reference
 
@@ -429,10 +430,9 @@ Credentialed passthrough, generated operations, curated write operations, and
 Code Mode require `yarr:write`; write satisfies read.
 
 Generated DELETE operations, `api_delete`, `download_remove`,
-`stats_delete_image_cache`, and `trace_terminate_stream` are destructive. CLI
-commands dispatch them immediately. MCP callers get an interactive elicitation
-prompt at the actual dispatch point, including inside Code Mode, with no call
-argument or nested `callTool` path that can skip it.
+`stats_delete_image_cache`, and `trace_terminate_stream` are marked destructive
+for client and operator visibility. The flag is informative: authorized, valid
+CLI and MCP calls dispatch immediately, including inside Code Mode.
 
 Responses are capped by the shared token-limit layer before they are returned to
 MCP clients.

@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Remove MCP confirmation prompts. Explicit user instructions authorize actions;
+  after authentication, scope checks, and input validation, calls execute
+  immediately. Destructive and disruptive classifications remain informative
+  metadata, and clients must clarify ambiguous requests before dispatch.
 
 - Relicense Dinglebear-owned original work under AGPL-3.0-only and document separate commercial licensing; third-party material retains its original terms.
 - Regenerate the committed Unraid package and release manifest from the pinned v2.1.0 assets, restoring byte-for-byte reproducibility across umask settings.

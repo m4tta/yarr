@@ -124,7 +124,7 @@ scraping prose:
 |---|---|---|
 | `x-yarr-action-metadata` | `ACTION_SPECS` + `curated_commands()` | Per-action scope, params, mutability, destructive flag, capability, and allowed service kinds. |
 | `x-yarr-service-metadata` | `ServiceKind::descriptor()` | Per-kind capability, auth style, API prefix, resource noun, and path allowlist. |
-| `x-yarr-agent-guidance` | schema generator | Preferred first-pass reads, generic passthrough guidance, the elicitation model for destructive deletes, and response-shaping hints. |
+| `x-yarr-agent-guidance` | schema generator | Preferred first-pass reads, generic passthrough guidance, the immediate-execution model, and response-shaping hints. |
 | `properties.*.x-yarr-actions` | curated command descriptors | Lists which curated actions consume a lifted top-level param. |
 
 "#,
@@ -163,11 +163,10 @@ action; unsupported rows are explicitly omitted below. qBittorrent uses a locall
 maintained contract audited against pinned upstream source, and also retains its
 curated download helpers. Discover operations
 with `codemode.search(query)` and inspect signatures / response types with
-`codemode.describe(path)`. Direct local CLI scripts use the operator's local
-trust boundary. MCP Code Mode re-authorizes every inner operation and requires
-client elicitation for destructive/disruptive operations, including POST-based
-qBittorrent torrent deletion and application administration; clients without
-elicitation support fail closed.
+`codemode.describe(path)`. MCP Code Mode re-authorizes every inner operation;
+after scope checks and input validation, operations run immediately, including
+destructive and disruptive operations. Those effect labels are informative
+metadata for planning and review and do not gate execution.
 
 "#,
     );

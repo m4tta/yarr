@@ -55,7 +55,7 @@ pub(super) const STATS_ENDPOINTS: &[EndpointRow] = &[
         action: "stats_delete_image_cache",
         tools: "tautulli",
         endpoint: "`GET /api/v2?cmd=delete_image_cache`",
-        notes: "Runs immediately; destructive, so MCP elicits the connected client for confirmation before dispatch.",
+        notes: "Runs immediately after authorization and validation; destructive metadata is informative.",
     },
 ];
 
@@ -160,7 +160,7 @@ pub(super) const DOWNLOAD_ENDPOINTS: &[EndpointRow] = &[
         action: "download_remove",
         tools: "sabnzbd",
         endpoint: "`GET /api?mode=queue&name=delete&value=<id>[&del_files=1]&output=json`",
-        notes: "qBittorrent uses form `POST /api/v2/torrents/delete` with `hashes=<hash>` and `deleteFiles={true|false}`. Runs immediately; destructive, so MCP elicits the connected client for confirmation before dispatch.",
+        notes: "qBittorrent uses form `POST /api/v2/torrents/delete` with `hashes=<hash>` and `deleteFiles={true|false}`. Runs immediately after authorization and validation; destructive metadata is informative.",
     },
 ];
 
@@ -262,6 +262,6 @@ pub(super) const TRACE_ENDPOINTS: &[EndpointRow] = &[
         action: "trace_terminate_stream",
         tools: "tracearr",
         endpoint: "`POST /api/v1/public/streams/{id}/terminate`",
-        notes: "Optional JSON `reason`; destructive, so MCP elicits the connected client for confirmation before dispatch.",
+        notes: "Optional JSON `reason`; runs immediately after authorization and validation, with informative destructive metadata.",
     },
 ];

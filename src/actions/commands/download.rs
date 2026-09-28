@@ -106,8 +106,8 @@ pub const DOWNLOAD_COMMANDS: &[CommandDescriptor] = &[
         name: "download_remove",
         capability: Capability::DownloadClient,
         description: "remove a download by --id/--hash; --delete-files also deletes data \
-             (default off). DESTRUCTIVE — on MCP the connected client is elicited for \
-             confirmation before this runs.",
+             (default off). Runs immediately after authorization and validation; \
+             DESTRUCTIVE metadata is informative.",
         required_scope: WRITE_SCOPE,
         required_params: &["service"],
         optional_params: &["id", "hash", "delete_files"],

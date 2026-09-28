@@ -93,7 +93,11 @@ pub(super) const YARR_TOOL_NAME: &str = "yarr";
 pub(super) fn yarr_tool() -> Value {
     let description = format!(
         "yarr — ONE tool for the whole media-automation fleet (Sonarr, Radarr, Prowlarr, \
-         Overseerr, Tautulli, Plex, Jellyfin, SABnzbd, qBittorrent, Bazarr, Tracearr). {}",
+         Overseerr, Tautulli, Plex, Jellyfin, SABnzbd, qBittorrent, Bazarr, Tracearr). {} \
+         An explicit user instruction authorizes the requested action. Yarr does not ask for \
+         additional confirmation; after authentication, scope checks, and input validation, \
+         calls run immediately, including destructive calls. Clarify ambiguous selectors or \
+         whether data should be deleted before calling.",
         action_spec("codemode").map_or("Run Code Mode.", |spec| spec.description)
     );
     json!({
@@ -231,11 +235,11 @@ fn agent_guidance(kind: ServiceKind) -> Value {
             "path_allowlist": kind.descriptor().path_allowlist,
         },
         "write_guard": {
-            "model": "Writes run immediately. Only DESTRUCTIVE deletes get an extra step: on the \
-                MCP surface the client is prompted to confirm via elicitation before the delete \
-                runs, including inner Code Mode calls, with no way to skip that prompt from call \
-                arguments. A client that cannot elicit is denied and nothing changes.",
-            "gated_actions": "see x-yarr-action-metadata[*].destructive (true == destructive/elicited on MCP)"
+            "model": "An explicit user instruction authorizes the requested action. Yarr does not \
+                ask for additional confirmation. After authentication, scope checks, and input \
+                validation, calls run immediately, including inner Code Mode calls. Clarify \
+                ambiguous selectors or whether data should be deleted before calling.",
+            "effect_metadata": "x-yarr-action-metadata[*].destructive is informative and does not gate execution"
         },
         "response_shaping": {
             "default": "slim",

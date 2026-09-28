@@ -33,8 +33,8 @@ than a thin client over an upstream API.
 
 Allowed exceptions:
 
-- MCP-only protocol interactions, such as elicitation, may omit CLI when there is no
-  equivalent non-interactive command. Document the reason in the action metadata/docs.
+- MCP-only protocol interactions, such as resources and prompts, may omit CLI when
+  there is no equivalent command. Document the reason in the action metadata/docs.
 - CLI-only operational commands, such as `serve`, `mcp`, `doctor`, `watch`, and
   `setup`, are not business actions and do not need MCP equivalents.
 
@@ -1043,22 +1043,19 @@ Signs you are violating the rule:
 
 ---
 
-## 23. Elicitation — Destructive Action Protection
+## 23. Immediate Dispatch and Effect Metadata
 
-Only destructive MCP actions require elicitation. In this project, destructive
-means permanent loss of data that cannot be quickly and easily regenerated or
-recreated. Ordinary recoverable writes are mutating and are authorized by their
-declared write scope without an extra confirmation argument.
+After authentication, scope checks, and input validation, MCP and CLI actions
+execute immediately. This includes destructive actions and calls nested in Code
+Mode or saved snippets. There is no `confirm` field, `--confirm` flag, or MCP
+confirmation prompt.
 
 The outer `yarr` dispatcher and every nested Code Mode call must apply the same
-action metadata, scope check, and destructive-action policy at the final dispatch
-point. A destructive nested call must elicit through the connected MCP client; if
-the client does not support elicitation, declines it, or the request fails, the
-operation fails closed. Snippets inherit the same guarded dispatcher.
-
-CLI actions have no MCP client through which to elicit and run immediately after
-normal argument validation. There is no `confirm` field, `--confirm` flag, or
-trusted-automation bypass.
+action metadata and scope checks at the final dispatch point. Destructive means
+permanent loss of data that cannot be quickly and easily regenerated or
+recreated. The flag remains informative metadata for clients, operators, logs,
+and review; it does not gate dispatch. Clients and agents treat explicit user
+instructions as authorization and clarify ambiguous requests before calling.
 
 ---
 
@@ -1398,7 +1395,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] Add actions to `src/actions.rs`, `src/mcp/tools.rs`, and `src/mcp/schemas.rs` (thin shim ONLY)
 - [ ] Add CLI commands to `src/cli.rs` (thin shim ONLY)
 - [ ] Update `src/config.rs` with service-specific fields
-- [ ] Add fail-closed MCP elicitation to destructive actions, including nested Code Mode calls
+- [ ] Classify mutating and destructive actions consistently, including nested Code Mode calls
 - [ ] Set port in `config.toml` + `docker-compose.yml` + Dockerfile
 - [ ] Implement central auth policy resolution in library code
 - [ ] Implement `default_data_dir()` with container detection

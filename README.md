@@ -341,9 +341,10 @@ These actions work for every configured service kind:
 | `snippet_run` | `yarr:write` | `yarr snippet run` / `codemode.run(name, input)` | Run a saved snippet |
 | `snippet_delete` | `yarr:write` | `yarr snippet delete` | Delete a saved snippet |
 
-There is no `confirm` argument. CLI destructive commands dispatch immediately.
-MCP direct and nested Code Mode destructive calls require elicitation and fail
-closed if the peer cannot elicit or approval is not granted.
+There is no `confirm` argument. After transport authentication, scope checks,
+and input validation, CLI and MCP actions dispatch immediately, including calls
+nested inside Code Mode. MCP clients and agents must treat explicit user
+instructions as authorization and clarify ambiguous requests before calling Yarr.
 
 ## CLI Reference
 
@@ -462,14 +463,13 @@ bearer or OAuth transport auth. `service_status` requires `yarr:read`.
 Credentialed passthrough, generated operations, curated write operations, and
 Code Mode require `yarr:write`; write satisfies read.
 
-One shared effect policy classifies generated operations and raw writes for both
-direct MCP calls and Code Mode. Destructive actions include DELETE, Plex trash
-emptying, and Sonarr/Radarr backup restoration. Disruptive actions include Plex
-session termination and update application, Sonarr/Radarr restart/shutdown, and
-recognized update or API-key-reset commands. Unknown raw POST/PUT routes also
-require confirmation. Ordinary known writes retain their existing behavior.
-MCP asks through elicitation at dispatch and refuses gated calls when confirmation
-is unavailable. Trusted CLI commands still execute immediately.
+The discovery catalog retains high-impact metadata for generated operations,
+including DELETE, Plex trash emptying, Sonarr/Radarr backup restoration,
+process restart/shutdown, and selected application settings. Curated destructive
+actions and raw DELETE also retain their destructive labels. These labels inform
+clients and operators; they do not add a confirmation step or exhaustively
+describe the effects of arbitrary request bodies and raw API calls. Authorized,
+valid calls execute immediately, so clients must resolve user intent before dispatch.
 
 Generated operations validate declared parameters and JSON bodies before sending
 them upstream. Field errors mask submitted values. Validation uses the bundled

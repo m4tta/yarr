@@ -139,9 +139,8 @@ impl YarrService {
         self.client.get_json(self.service(service)?, path).await
     }
 
-    /// POST passthrough. Mutating but NOT destructive, so it runs immediately —
-    /// no confirm gate (the write-confirm gate is reserved for destructive
-    /// deletes; see [`api_delete`](Self::api_delete)).
+    /// POST passthrough. Mutating but not destructive; runs immediately after
+    /// authorization and validation.
     pub async fn api_post(&self, service: &str, path: &str, body: Value) -> Result<Value> {
         validate_safe_path(path)?;
         self.client
@@ -158,9 +157,9 @@ impl YarrService {
             .await
     }
 
-    /// DELETE passthrough — the one destructive generic verb. On the MCP
-    /// surface, `rmcp_server.rs` elicits the connected client for confirmation
-    /// before dispatch reaches here; the CLI and Code Mode run it immediately.
+    /// DELETE passthrough — the one destructive generic verb. The destructive
+    /// classification is informative; CLI, MCP, and Code Mode dispatch it
+    /// immediately after authorization and validation.
     pub async fn api_delete(
         &self,
         service: &str,

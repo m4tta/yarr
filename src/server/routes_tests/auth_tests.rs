@@ -81,7 +81,7 @@ async fn authenticated_read_token_cannot_spoof_yarr_or_call_hidden_tool() {
 async fn static_bearer_is_read_only_but_can_use_flat_read_action() {
     let (state, calls, server) = counting_state(crate::config::ToolMode::Flat).await;
     let response = authenticated_mcp_call(
-        state,
+        state.clone(),
         "read-token",
         json!({
             "jsonrpc": "2.0", "id": 4, "method": "tools/call",
@@ -90,6 +90,39 @@ async fn static_bearer_is_read_only_but_can_use_flat_read_action() {
     )
     .await;
     assert_eq!(response["result"]["isError"], false);
+
+    for (id, arguments) in [
+        (
+            14,
+            json!({"action": "api_delete", "path": "/api/v3/series/1"}),
+        ),
+        (15, json!({"action": "op", "op": "post_system_restart"})),
+        (
+            16,
+            json!({
+                "action": "codemode",
+                "code": "async () => await callTool('api_delete', {service:'sonarr', path:'/api/v3/series/1'})"
+            }),
+        ),
+        (17, json!({"action": "snippet_run", "name": "dangerous"})),
+    ] {
+        let denied = authenticated_mcp_call(
+            state.clone(),
+            "read-token",
+            json!({
+                "jsonrpc": "2.0", "id": id, "method": "tools/call",
+                "params": {"name": "sonarr", "arguments": arguments}
+            }),
+        )
+        .await;
+        assert!(
+            denied["error"]["message"]
+                .as_str()
+                .is_some_and(|message| message.contains("yarr:write")),
+            "read-only token unexpectedly authorized write: {denied}"
+        );
+    }
+
     assert_eq!(calls.load(Ordering::SeqCst), 1);
     server.abort();
 }
@@ -125,7 +158,7 @@ async fn oauth_disable_static_token_rejects_configured_bearer() {
 }
 
 #[tokio::test]
-async fn authenticated_write_token_cannot_bypass_high_impact_elicitation() {
+async fn authenticated_write_token_dispatches_authorized_operations_without_extra_confirmation() {
     let dir = tempfile::tempdir().unwrap();
     let mut state = crate::testing::oauth_state(dir.path()).await;
     let (counting, calls, server) = counting_state(crate::config::ToolMode::Codemode).await;
@@ -187,12 +220,8 @@ async fn authenticated_write_token_cannot_bypass_high_impact_elicitation() {
         }),
     )
     .await;
-    assert_eq!(response["result"]["isError"], true);
-    let text = response["result"]["content"][0]["text"].as_str().unwrap();
-    assert!(
-        text.contains("elicitation-capable") || text.contains("nothing changed"),
-        "unexpected tool error: {text}"
-    );
+    assert_eq!(response["result"]["isError"], false, "response: {response}");
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
 
     let mut flat = state;
     flat.config.tool_mode = crate::config::ToolMode::Flat;
@@ -229,12 +258,7 @@ async fn authenticated_write_token_cannot_bypass_high_impact_elicitation() {
             }),
         )
         .await;
-        assert_eq!(response["result"]["isError"], true, "response: {response}");
-        let text = response["result"]["content"][0]["text"].as_str().unwrap();
-        assert!(
-            text.contains("elicitation-capable") || text.contains("nothing changed"),
-            "unexpected flat script tool error: {text}"
-        );
+        assert_eq!(response["result"]["isError"], false, "response: {response}");
     }
     let direct = authenticated_mcp_call(
         flat.clone(),
@@ -249,17 +273,14 @@ async fn authenticated_write_token_cannot_bypass_high_impact_elicitation() {
     )
     .await;
     assert_eq!(direct["result"]["isError"], false, "response: {direct}");
-    let direct_text = direct["result"]["content"][0]["text"].as_str().unwrap();
-    let direct_result: serde_json::Value = serde_json::from_str(direct_text).unwrap();
-    assert_eq!(direct_result["declined"], true, "response: {direct}");
     assert_eq!(
         calls.load(Ordering::SeqCst),
-        0,
-        "unconfirmed high-impact operation reached upstream"
+        6,
+        "all authorized high-impact operations should reach upstream"
     );
 
     let ordinary = authenticated_mcp_call(
-        flat,
+        flat.clone(),
         &token,
         json!({
             "jsonrpc": "2.0", "id": 12, "method": "tools/call",
@@ -277,8 +298,33 @@ async fn authenticated_write_token_cannot_bypass_high_impact_elicitation() {
     assert_eq!(ordinary["result"]["isError"], false, "response: {ordinary}");
     assert_eq!(
         calls.load(Ordering::SeqCst),
-        1,
-        "ordinary mutation was unnecessarily gated"
+        7,
+        "ordinary mutation should also reach upstream"
+    );
+
+    let invalid = authenticated_mcp_call(
+        flat,
+        &token,
+        json!({
+            "jsonrpc": "2.0", "id": 13, "method": "tools/call",
+            "params": {
+                "name": "sonarr",
+                "arguments": {"action": "op", "op": "no_such_operation"}
+            }
+        }),
+    )
+    .await;
+    assert_eq!(invalid["result"]["isError"], true, "response: {invalid}");
+    assert!(
+        invalid["result"]["content"][0]["text"]
+            .as_str()
+            .is_some_and(|message| message.contains("unknown or unsupported")),
+        "invalid operation should still fail validation: {invalid}"
+    );
+    assert_eq!(
+        calls.load(Ordering::SeqCst),
+        7,
+        "invalid operation must not reach upstream"
     );
     server.abort();
 }

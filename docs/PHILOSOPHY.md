@@ -88,7 +88,7 @@ Operators and agents should never have to guess what the server is doing.
 Every business action reachable from MCP must also be reachable from the CLI. The service layer is called identically from both surfaces — no logic is duplicated, no behavior diverges. Because both shims call the same `YarrService` methods, parity is automatic when the shims are complete.
 
 Allowed exceptions — documented in the parity table in `CLAUDE.md`:
-- MCP-only protocol interactions (elicitation, resources, prompts) have no CLI equivalent by design.
+- MCP-only protocol interactions (resources and prompts) have no CLI equivalent by design.
 - CLI-only operational commands (`serve`, `mcp`, `doctor`, `watch`, `setup`) are infrastructure, not business actions.
 
 REST API and Web UI are required only for application/platform servers that own meaningful state or non-MCP consumers. A thin upstream-client MCP server does not need a local REST API.
@@ -120,17 +120,18 @@ MCP tool errors must use `CallToolResult::error()`, not `Err(ErrorData)`. An `Er
 
 ## Mutating and Destructive Action Protection
 
-Every CLI action runs immediately — there is no confirm parameter or `--confirm`
-flag. On the MCP surface, a **destructive** action gets a real interactive
-confirmation at the actual dispatch point, including nested Code Mode and
-snippet calls. A client that cannot elicit, or a user who declines, is denied.
-The invariant the registry enforces is `destructive =>
-mutates` (every destructive action is a write, but most writes are not
-destructive).
+Every CLI and MCP action runs immediately after authentication, scope checks,
+and input validation. There is no confirm parameter, `--confirm` flag, or MCP
+confirmation prompt. Clients and agents treat explicit user instructions as
+authorization and clarify ambiguous requests before dispatch. The invariant the
+registry enforces is `destructive => mutates` (every destructive action is a
+write, but most writes are not destructive).
 
 "Destructive" is narrower than "mutating": it means permanent loss of data that cannot be quickly and easily regenerated or recreated with minimal effort. Formatting a drive, deleting a code folder without recovery, or hard-resetting a repo past easy restore is destructive. Removing re-downloadable media, stopping containers, clearing OAuth tokens, toggling a gateway, or killing restartable processes is mutating but not destructive.
 
-Actions flagged destructive (e.g. `api_delete`, a generated DELETE `op`, `download_remove`, `stats_delete_image_cache`) get the MCP elicitation prompt described above. Non-destructive writes — refreshes, searches, monitor toggles, adds — never get one.
+Actions such as `api_delete`, a generated DELETE `op`, `download_remove`, and
+`stats_delete_image_cache` retain destructive metadata for planning, logging,
+and review. The metadata does not gate execution.
 
 ## Plugin setup is data-only
 
